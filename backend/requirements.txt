@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+anthropic
+langchain
+langchain-anthropic
+langgraph
+chromadb
+supabase 
+pydantic
+python-multipart
