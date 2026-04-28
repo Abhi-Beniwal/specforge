@@ -26,7 +26,7 @@ def root():
 
 @app.post("/generate-spec")
 async def generate_spec(request: IdeaRequest):
-    client = anthropic.Anthropic(api_key=os.getenv("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"))
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     message = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=1024,
