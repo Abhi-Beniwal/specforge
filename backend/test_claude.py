@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv() 
  
 # Create the Anthropic client 
-client = anthropic.Anthropic(api_key=os.getenv("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")) 
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) 
  
 # Make your first API call 
 message = client.messages.create( 
