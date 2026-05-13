@@ -1,0 +1,49 @@
+Software Requirements Specification - Standard Template
+
+1. Product Overview
+- What the product does in one paragraph
+- The core problem it solves
+- Who it is for
+
+2. Stakeholders
+- Primary users: who uses the product daily
+- Secondary users: admins, support staff
+- Business stakeholders: who owns the product
+
+3. Functional Requirements
+- What the system must do
+- Written as: The system shall allow users to...
+- Each requirement must be testable and unambiguous
+
+4. Non-Functional Requirements
+- Performance: page load times, API response times, concurrent user targets
+- Availability: uptime requirements, acceptable downtime windows
+- Scalability: expected user growth, data volume projections
+- Security: authentication method, encryption standards, compliance requirements
+- Usability: accessibility standards, supported browsers and devices
+
+5. User Stories
+Format: As a [user type], I want to [action] so that [benefit].
+Example: As a gym member, I want to receive a personalised workout plan so that I do not waste time deciding what to do at the gym.
+
+6. Acceptance Criteria
+For each user story, define what done looks like.
+Example: Given a new user has completed onboarding, when they open the app, then they see a 7-day workout plan matched to their stated fitness level and available equipment.
+
+7. Technical Constraints
+- Technology stack decisions and reasons
+- Third-party services and their limitations
+- Regulatory constraints that affect technical decisions
+
+8. Risks and Mitigations
+- List top 5 risks to successful delivery
+- For each risk: likelihood, impact, mitigation strategy
+
+9. MVP Scope
+- The minimum set of features needed to validate the core hypothesis with real users
+- What is explicitly out of scope for MVP
+
+10. Open Questions
+- Decisions that have not been made yet
+- Assumptions that need to be validated
+- Dependencies on external parties

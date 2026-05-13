@@ -1,27 +1,17 @@
 from typing import TypedDict, Dict, Any, List, Optional
 
-# =========================================================
 # GLOBAL SHARED STATE
-# =========================================================
-# This state is shared across all agents.
-# Each agent reads previous outputs and writes new analysis.
-# The orchestrator synthesizes everything into final_spec.
-# =========================================================
 
 class SpecForgeState(
     TypedDict,
     total=False
 ):
-
-    # =========================================================
+    
     # CORE INPUT
-    # =========================================================
 
     idea: str
 
-    # =========================================================
-    # OPTIONAL GLOBAL PIPELINE TRACKING
-    # =========================================================
+    # GLOBAL PIPELINE TRACKING
 
     pipeline_status: Optional[str]
 
@@ -29,9 +19,7 @@ class SpecForgeState(
 
     total_pipeline_latency: Optional[float]
 
-    # =========================================================
     # BUSINESS ANALYST OUTPUT
-    # =========================================================
 
     business_analysis: Optional[Dict[str, Any]]
 
@@ -51,9 +39,7 @@ class SpecForgeState(
 
     business_metadata: Optional[Dict[str, Any]]
 
-    # =========================================================
     # DEVELOPER OUTPUT
-    # =========================================================
 
     dev_concerns: Optional[Dict[str, Any]]
 
@@ -81,9 +67,13 @@ class SpecForgeState(
 
     developer_metadata: Optional[Dict[str, Any]]
 
-    # =========================================================
+    developer_architecture_concerns: Optional[List[str]]
+
+    developer_scalability_risks: Optional[List[str]]
+
+    developer_blockers: Optional[List[str]]
+
     # QA OUTPUT
-    # =========================================================
 
     qa_concerns: Optional[Dict[str, Any]]
 
@@ -113,9 +103,7 @@ class SpecForgeState(
 
     qa_metadata: Optional[Dict[str, Any]]
 
-    # =========================================================
     # SECURITY OUTPUT
-    # =========================================================
 
     security_concerns: Optional[Dict[str, Any]]
 
@@ -149,9 +137,13 @@ class SpecForgeState(
 
     security_metadata: Optional[Dict[str, Any]]
 
-    # =========================================================
+    infrastructure_risks: Optional[List[str]]
+
+    compliance_risks: Optional[List[str]]
+
+    mitigation_strategies: Optional[List[str]]
+
     # UX OUTPUT
-    # =========================================================
 
     ux_concerns: Optional[Dict[str, Any]]
 
@@ -181,9 +173,7 @@ class SpecForgeState(
 
     ux_metadata: Optional[Dict[str, Any]]
 
-    # =========================================================
     # FINAL ORCHESTRATION OUTPUT
-    # =========================================================
 
     final_spec: Optional[Dict[str, Any]]
 
@@ -191,9 +181,7 @@ class SpecForgeState(
 
     project_viability: Optional[str]
 
-    # =========================================================
     # FINAL PRODUCT SUMMARY
-    # =========================================================
 
     product_summary: Optional[str]
 
@@ -203,9 +191,7 @@ class SpecForgeState(
 
     final_recommendation: Optional[str]
 
-    # =========================================================
     # FINAL REQUIREMENTS
-    # =========================================================
 
     functional_requirements: Optional[List[str]]
 
@@ -221,9 +207,7 @@ class SpecForgeState(
 
     ux_requirements: Optional[List[str]]
 
-    # =========================================================
     # CROSS-AGENT ANALYSIS
-    # =========================================================
 
     cross_agent_conflicts: Optional[List[str]]
 
@@ -237,9 +221,7 @@ class SpecForgeState(
 
     implementation_priorities: Optional[List[str]]
 
-    # =========================================================
     # PRODUCT ROADMAP
-    # =========================================================
 
     launch_risks: Optional[List[str]]
 
@@ -247,8 +229,6 @@ class SpecForgeState(
 
     future_scope: Optional[List[str]]
 
-    # =========================================================
     # ORCHESTRATOR METADATA
-    # =========================================================
 
     orchestrator_metadata: Optional[Dict[str, Any]]

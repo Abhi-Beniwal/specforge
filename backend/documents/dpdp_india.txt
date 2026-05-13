@@ -1,0 +1,32 @@
+DPDP - Digital Personal Data Protection Act 2023 (India)
+
+India's DPDP Act came into effect in 2023 and applies to all products processing digital personal data of Indian residents.
+
+Key obligations for businesses (called Data Fiduciaries):
+- Consent: Must obtain free, informed, specific, and unambiguous consent before processing personal data.
+- Purpose limitation: Data can only be used for the purpose for which consent was given.
+- Data minimisation: Collect only what is necessary for the stated purpose.
+- Accuracy: Take reasonable steps to ensure data is accurate and up to date.
+- Storage limitation: Delete personal data once the purpose is fulfilled.
+- Security: Implement reasonable security safeguards to prevent data breaches.
+
+Children's data (under 18 in India):
+- Parental or guardian consent is mandatory before processing data of anyone under 18.
+- Behavioural monitoring and targeted advertising to children is prohibited.
+- Age verification mechanisms are required.
+
+User rights:
+- Right to access: Users can ask what data is held about them.
+- Right to correction: Users can request correction of inaccurate data.
+- Right to erasure: Users can request deletion of their data.
+- Right to grievance redressal: Every platform must have a grievance officer.
+
+Penalties:
+- Up to 250 crore rupees for failure to implement security safeguards.
+- Up to 200 crore rupees for failure to notify data breaches.
+- Up to 50 crore rupees for violating children's data provisions.
+
+For AI and SaaS products targeting Indian users:
+- A clear privacy policy in simple language is mandatory.
+- Consent must be obtained before onboarding, not buried in terms and conditions.
+- Data localisation rules are still being finalised but sensitive data may need to stay in India.

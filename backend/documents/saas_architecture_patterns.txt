@@ -1,0 +1,43 @@
+Common SaaS Architecture Patterns and Requirements
+
+Multi-tenancy:
+- Each customer's data must be logically or physically isolated.
+- Row-level security in the database ensures one tenant cannot access another's data.
+- Shared infrastructure with isolated data is the most common approach for early-stage SaaS.
+
+API Design:
+- RESTful APIs should use nouns not verbs in routes: /users not /getUsers.
+- Always version your API: /api/v1/ so breaking changes do not affect existing clients.
+- Rate limiting must be applied to every public endpoint to prevent abuse.
+- API keys and tokens must never be logged or returned in error messages.
+
+Authentication and Authorisation:
+- JWT tokens are stateless and suitable for SaaS APIs.
+- Refresh token rotation prevents token theft from being permanently exploitable.
+- Role-Based Access Control (RBAC): define roles like admin, user, viewer and enforce on every route.
+- Never implement auth from scratch - use proven libraries or services like Supabase Auth.
+
+Database:
+- Use soft deletes: add a deleted_at column instead of actually deleting rows, so data can be recovered.
+- Always index foreign keys and columns used in WHERE clauses.
+- Use UUIDs not sequential integers for primary keys to prevent enumeration attacks.
+- Store audit logs for all create, update, delete operations on sensitive data.
+
+Scalability:
+- Stateless backends scale horizontally - do not store session state in memory.
+- Use a job queue for long-running tasks: do not run them inside API request handlers.
+- Cache expensive database queries using Redis or similar.
+- Use CDN for static assets to reduce server load.
+
+AI and LLM Integration:
+- Never call LLM APIs synchronously in request handlers for long operations - use async queues.
+- Always set maximum token limits to control costs.
+- Log all LLM inputs and outputs for debugging and abuse detection.
+- Implement fallback behaviour when the LLM API is unavailable.
+- Rate limit LLM-powered endpoints more aggressively than standard endpoints due to cost.
+
+Monitoring and Reliability:
+- Define SLAs: what uptime percentage do you promise users?
+- Set up health check endpoints that your hosting provider can ping.
+- Alert on error rate spikes, not just server downtime.
+- Implement circuit breakers for third-party API dependencies.

@@ -1,0 +1,36 @@
+OWASP Top 10 - Most Critical Web Application Security Risks
+
+1. Broken Access Control
+Users can access data or perform actions they are not authorised for. Example: a regular user accessing admin routes. Fix: enforce role-based access control on every endpoint.
+
+2. Cryptographic Failures
+Sensitive data is not encrypted or is using weak encryption. Example: storing passwords in plain text or transmitting data over HTTP. Fix: use HTTPS everywhere, hash passwords with bcrypt, encrypt sensitive fields at rest.
+
+3. Injection
+Untrusted data is sent to an interpreter as part of a command. Example: SQL injection, prompt injection in LLM systems. Fix: use parameterised queries, validate and sanitise all inputs, treat LLM inputs as untrusted.
+
+4. Insecure Design
+Security risks introduced at the architecture level, not just in code. Fix: threat model during design phase, apply security by design principles.
+
+5. Security Misconfiguration
+Default credentials left in place, unnecessary features enabled, error messages exposing stack traces. Fix: disable default accounts, configure proper error handling, review all default settings.
+
+6. Vulnerable and Outdated Components
+Using libraries or frameworks with known vulnerabilities. Fix: maintain dependency inventory, update regularly, use tools like Dependabot.
+
+7. Identification and Authentication Failures
+Weak passwords allowed, no multi-factor authentication, session tokens exposed. Fix: enforce strong passwords, implement MFA, use secure session management.
+
+8. Software and Data Integrity Failures
+Code or data from untrusted sources without verification. Example: using unverified npm packages. Fix: verify package integrity, use code signing.
+
+9. Security Logging and Monitoring Failures
+No audit logs, no alerting on suspicious activity. Fix: log all authentication events, failed access attempts, and admin actions. Set up alerts.
+
+10. Server-Side Request Forgery (SSRF)
+Attackers trick the server into making requests to internal systems. Fix: validate and whitelist URLs, block requests to internal IP ranges.
+
+For AI and LLM products specifically:
+- Prompt injection is a critical risk: users can craft inputs that override system prompts.
+- Model output must be sanitised before rendering in the UI to prevent XSS.
+- API keys must never be exposed in frontend code or logs.

@@ -1,0 +1,27 @@
+GDPR - General Data Protection Regulation Summary
+
+GDPR applies to any product that collects or processes personal data of EU residents.
+
+Key principles:
+- Lawful basis: You must have a legal reason to collect data. Common bases are user consent, contract fulfillment, or legitimate interest.
+- Data minimisation: Only collect data you actually need. Do not collect extra fields just in case.
+- Purpose limitation: Data collected for one purpose cannot be used for another without fresh consent.
+- Storage limitation: Do not store personal data longer than necessary. Define retention periods.
+- Right to erasure: Users can request their data be deleted. Your system must support this.
+- Right to access: Users can request a copy of all data you hold on them.
+- Data breach notification: If a breach occurs, you must notify the relevant authority within 72 hours.
+- Data Protection Officer: Required if you process sensitive data at large scale.
+- Privacy by design: Security and privacy must be built into the system from the start, not added later.
+
+Sensitive data categories requiring extra protection:
+- Health and medical data
+- Biometric data
+- Financial data
+- Children's data (under 13 in most jurisdictions)
+
+Fines for non-compliance: Up to 4% of global annual revenue or 20 million euros, whichever is higher.
+
+For AI products specifically:
+- Automated decision-making that significantly affects users requires explicit consent.
+- Users must be informed when they are interacting with an AI system.
+- Profiling users requires a lawful basis and must be disclosed in privacy policy.

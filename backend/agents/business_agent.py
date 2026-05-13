@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .state import SpecForgeState
 from .utils import extract_json, estimate_cost, logger
+from rag.setup import get_relevant_context
 
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
@@ -60,9 +61,8 @@ Focus on practical business realism.
 
 IMPORTANT RESPONSE RULES:
 Return ONLY raw valid JSON.
-Do NOT use markdown, ```json, explanations, comments, headings, or notes.
+Do NOT use markdown, explanations, comments, headings, or notes.
 Keep responses concise. Maximum 3-5 items per array.
-Keep descriptions under 2 sentences.
 
 Required JSON structure:
 {
@@ -89,7 +89,14 @@ def validate_response(raw_text: str) -> Dict[str, Any]:
 
     validated.verdict = validated.verdict.lower().strip()
 
-    allowed_verdicts = {"promising", "needs_clarification", "not_viable", "needs_work", "risky", "unclear"}
+    allowed_verdicts = {
+        "promising",
+        "needs_clarification",
+        "not_viable",
+        "needs_work",
+        "risky",
+        "unclear"
+    }
 
     if validated.verdict not in allowed_verdicts:
         logger.warning(f"Unknown verdict received: {validated.verdict}")
@@ -98,7 +105,10 @@ def validate_response(raw_text: str) -> Dict[str, Any]:
     return validated.model_dump()
 
 
-def generate_analysis(client: anthropic.Anthropic, user_message: str) -> Dict[str, Any]:
+def generate_analysis(
+    client: anthropic.Anthropic,
+    user_message: str
+) -> Dict[str, Any]:
 
     last_error = None
 
@@ -114,10 +124,16 @@ def generate_analysis(client: anthropic.Anthropic, user_message: str) -> Dict[st
                 max_tokens=MAX_TOKENS,
                 temperature=0,
                 system=BUSINESS_ANALYST_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}]
+                messages=[
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
+                ]
             )
 
             latency = round(time.time() - start_time, 2)
+
             raw_text = response.content[0].text.strip()
 
             logger.info(f"RAW BUSINESS RESPONSE:\n{raw_text}")
@@ -126,9 +142,19 @@ def generate_analysis(client: anthropic.Anthropic, user_message: str) -> Dict[st
 
             input_tokens = getattr(response.usage, "input_tokens", 0)
             output_tokens = getattr(response.usage, "output_tokens", 0)
-            estimated_cost = estimate_cost(input_tokens, output_tokens)
 
-            logger.info(f"BUSINESS SUCCESS | Latency={latency}s | Input={input_tokens} | Output={output_tokens} | Cost=${estimated_cost}")
+            estimated_cost = estimate_cost(
+                input_tokens,
+                output_tokens
+            )
+
+            logger.info(
+                f"BUSINESS SUCCESS | "
+                f"Latency={latency}s | "
+                f"Input={input_tokens} | "
+                f"Output={output_tokens} | "
+                f"Cost=${estimated_cost}"
+            )
 
             validated_response["_meta"] = {
                 "latency_seconds": latency,
@@ -140,9 +166,19 @@ def generate_analysis(client: anthropic.Anthropic, user_message: str) -> Dict[st
 
             return validated_response
 
-        except (anthropic.AnthropicError, ValidationError, ValueError, json.JSONDecodeError) as e:
+        except (
+            anthropic.AnthropicError,
+            ValidationError,
+            ValueError,
+            json.JSONDecodeError
+        ) as e:
+
             last_error = str(e)
-            logger.warning(f"Business Analysis Attempt {attempt} failed: {last_error}")
+
+            logger.warning(
+                f"Business Analysis Attempt {attempt} failed: {last_error}"
+            )
+
             if attempt < MAX_RETRIES:
                 time.sleep(RETRY_DELAY * attempt)
 
@@ -159,7 +195,9 @@ def business_analyst_node(state: SpecForgeState) -> SpecForgeState:
     state["business_score"] = None
 
     try:
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
+
         if not api_key:
             raise EnvironmentError("ANTHROPIC_API_KEY not found")
 
@@ -168,11 +206,18 @@ def business_analyst_node(state: SpecForgeState) -> SpecForgeState:
 
         client = anthropic.Anthropic(api_key=api_key)
 
+        rag_context = get_relevant_context(
+            f"market requirements business scalability SaaS monetization for: {state['idea']}"
+        )
+
         user_message = f"""
 Analyse this product idea from a business strategy perspective.
 
 PRODUCT IDEA:
 {state['idea']}
+
+RELEVANT BUSINESS DOCUMENTS:
+{rag_context}
 
 Focus on:
 - business risks
@@ -183,6 +228,8 @@ Focus on:
 - monetization feasibility
 - scalability realism
 
+Use the retrieved business context in your reasoning.
+
 Return ONLY valid JSON.
 """
 
@@ -191,21 +238,32 @@ Return ONLY valid JSON.
         state["business_analysis"] = analysis
         state["business_analysis_status"] = "success"
         state["business_verdict"] = analysis["verdict"]
+
         state["business_score"] = {
             "feasibility": analysis["feasibility_score"],
             "market_clarity": analysis["market_clarity_score"]
         }
-        state["business_key_questions"] = analysis["key_questions"]
-        state["business_concerns"] = analysis["business_concerns"]
-        state["business_missing_requirements"] = analysis["missing_requirements"]
-        state["business_assumptions"] = analysis["assumptions_detected"]
-        state["business_metadata"] = analysis["_meta"]
 
-        logger.info(f"Business Analysis Completed | Verdict={analysis['verdict']}")
+        state["business_key_questions"] = analysis["key_questions"]
+
+        state["business_concerns"] = analysis["business_concerns"]
+
+        state["business_missing_requirements"] = analysis[
+            "missing_requirements"
+        ]
+
+        state["business_assumptions"] = analysis[
+            "assumptions_detected"
+        ]
+
+        logger.info("Business Analyst Node Completed Successfully")
+
+        return state
 
     except Exception as e:
-        logger.exception("Business Analyst Node Failed")
-        state["business_analysis_status"] = "failed"
-        state["business_analysis"] = {"error": str(e)}
 
-    return state
+        logger.exception(f"Business Analyst Node Failed: {e}")
+
+        state["business_analysis_status"] = "failed"
+
+        return state
