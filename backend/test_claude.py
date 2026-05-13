@@ -1,24 +1,13 @@
-import anthropic 
-import os 
-from dotenv import load_dotenv 
- 
-# Load your .env file so the API key is available 
-load_dotenv() 
- 
-# Create the Anthropic client 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) 
- 
-# Make your first API call 
-message = client.messages.create( 
-    model="claude-sonnet-4-5", 
-    max_tokens=1024, 
-    messages=[ 
-        { 
-            "role": "user", 
-            "content": "I want to build a food delivery app for college students. What are 3 important questions a Business Analyst would ask?" 
-        } 
-    ] 
-) 
- 
-# Print the response 
-print(message.content[0].text)
+import os
+from dotenv import load_dotenv
+from anthropic import Anthropic
+
+load_dotenv()
+
+client = Anthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY")
+)
+
+models = client.models.list()
+
+print(models)
