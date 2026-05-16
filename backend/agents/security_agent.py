@@ -19,7 +19,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 MODEL_NAME = "claude-sonnet-4-6"
 MAX_RETRIES = 3
 RETRY_DELAY = 2
-MAX_TOKENS = 2500
+MAX_TOKENS = 4000
 
 
 class SecurityAnalysisSchema(BaseModel):
