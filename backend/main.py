@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 
-from .agents.pipeline import spec_pipeline
+from agents.pipeline import spec_pipeline
 
-from .database.db import (
+from database.db import (
     save_project,
     save_specification
 )

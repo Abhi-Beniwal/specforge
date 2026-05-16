@@ -11,14 +11,13 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .state import SpecForgeState
 from .utils import extract_json, estimate_cost, logger
-from ..rag.setup import get_relevant_context
+from rag.setup import get_relevant_context
 
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
-
 MODEL_NAME = "claude-sonnet-4-6"
-MAX_RETRIES = 2
+MAX_RETRIES = 3
 RETRY_DELAY = 2
 MAX_TOKENS = 2500
 
@@ -26,9 +25,6 @@ MAX_TOKENS = 2500
 class DeveloperAnalysisSchema(BaseModel):
     role: str
     referenced_business_concerns: List[str]
-    agreements_with_business_analysis: List[str]
-    disagreements_with_business_analysis: List[str]
-    missed_business_risks: List[str]
     architecture_concerns: List[str]
     scalability_risks: List[str]
     infrastructure_requirements: List[str]
@@ -36,10 +32,6 @@ class DeveloperAnalysisSchema(BaseModel):
     frontend_complexities: List[str]
     ai_engineering_risks: List[str]
     integration_challenges: List[str]
-    data_flow_risks: List[str]
-    technical_unknowns: List[str]
-    technical_debt_risks: List[str]
-    recommended_architecture_patterns: List[str]
     implementation_blockers: List[str]
     feasibility_score: int = Field(..., ge=1, le=10)
     scalability_score: int = Field(..., ge=1, le=10)
@@ -48,44 +40,42 @@ class DeveloperAnalysisSchema(BaseModel):
 
 
 DEVELOPER_SYSTEM_PROMPT = """
-You are an elite Senior Software Architect and Principal Engineer.
+
+You are an elite Senior Developer and Software Architect.
 
 You specialize in:
-- scalable backend systems
+- scalable SaaS systems
 - AI infrastructure
 - distributed systems
 - cloud architecture
-- SaaS engineering
-- frontend/backend architecture
+- backend engineering
 - production systems
 
-You are participating in a multi-agent product evaluation system.
-The Business Analyst has already analysed the product.
+You are part of a multi-agent AI product evaluation system.
 
 Your responsibilities:
-- reference business concerns
 - identify engineering risks
-- analyse scalability feasibility
-- analyse architecture complexity
-- identify infrastructure risks
-- identify operational bottlenecks
+- identify scalability risks
+- identify infrastructure bottlenecks
+- identify architecture complexity
 - identify implementation blockers
-- challenge unrealistic assumptions
+- challenge unrealistic technical assumptions
 
-Be engineering-focused and realistic. Do NOT blindly support ideas.
+Be realistic and engineering-focused.
 
-IMPORTANT RESPONSE RULES:
-Return ONLY raw valid JSON.
-Do NOT use markdown, explanations, comments, headings, or notes.
-Keep responses concise. Maximum 3-5 items per array.
+CRITICAL RESPONSE RULES:
+- Return ONLY raw valid JSON
+- Do NOT use markdown
+- Do NOT use code fences
+- Do NOT include explanations or notes
+- Do NOT include any text before or after JSON
+- Keep arrays concise (maximum 5 items)
+- Ensure response is complete valid JSON
 
 Required JSON structure:
 {
   "role": "Senior Developer",
   "referenced_business_concerns": [],
-  "agreements_with_business_analysis": [],
-  "disagreements_with_business_analysis": [],
-  "missed_business_risks": [],
   "architecture_concerns": [],
   "scalability_risks": [],
   "infrastructure_requirements": [],
@@ -93,10 +83,6 @@ Required JSON structure:
   "frontend_complexities": [],
   "ai_engineering_risks": [],
   "integration_challenges": [],
-  "data_flow_risks": [],
-  "technical_unknowns": [],
-  "technical_debt_risks": [],
-  "recommended_architecture_patterns": [],
   "implementation_blockers": [],
   "feasibility_score": 1,
   "scalability_score": 1,
@@ -107,45 +93,29 @@ Required JSON structure:
 
 
 def validate_response(raw_text: str) -> Dict[str, Any]:
-
     parsed = extract_json(raw_text)
-
     validated = DeveloperAnalysisSchema(**parsed)
 
-    if validated.role != "Senior Developer":
+    if validated.role.strip() != "Senior Developer":
         raise ValueError("Invalid role returned")
 
     validated.verdict = validated.verdict.lower().strip()
 
-    allowed_verdicts = {
-        "feasible",
-        "risky",
-        "technically_complex",
-        "complex",
-        "partially_feasible",
-        "needs_work"
-    }
+    allowed_verdicts = {"feasible", "risky", "complex", "needs_work", "partially_feasible"}
 
     if validated.verdict not in allowed_verdicts:
-        logger.warning(f"Unknown verdict received: {validated.verdict}")
+        logger.warning(f"Unknown verdict: {validated.verdict}")
         validated.verdict = "risky"
 
     return validated.model_dump()
 
 
-def generate_analysis(
-    client: anthropic.Anthropic,
-    user_message: str
-) -> Dict[str, Any]:
-
+def generate_analysis(client: anthropic.Anthropic, user_message: str) -> Dict[str, Any]:
     last_error = None
 
     for attempt in range(1, MAX_RETRIES + 1):
-
         try:
-
             logger.info(f"Developer Analysis Attempt {attempt}")
-
             start_time = time.time()
 
             response = client.messages.create(
@@ -153,42 +123,28 @@ def generate_analysis(
                 max_tokens=MAX_TOKENS,
                 temperature=0,
                 system=DEVELOPER_SYSTEM_PROMPT,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": user_message
-                    }
-                ]
+                messages=[{"role": "user", "content": user_message}]
             )
 
             latency = round(time.time() - start_time, 2)
 
+            if not response.content:
+                raise ValueError("Empty response content")
+
             raw_text = response.content[0].text.strip()
+
+            if not raw_text:
+                raise ValueError("Empty response text")
 
             logger.info(f"RAW DEVELOPER RESPONSE:\n{raw_text}")
 
             validated_response = validate_response(raw_text)
 
             input_tokens = getattr(response.usage, "input_tokens", 0)
+            output_tokens = getattr(response.usage, "output_tokens", 0)
+            estimated_cost = estimate_cost(input_tokens, output_tokens)
 
-            output_tokens = getattr(
-                response.usage,
-                "output_tokens",
-                0
-            )
-
-            estimated_cost = estimate_cost(
-                input_tokens,
-                output_tokens
-            )
-
-            logger.info(
-                f"DEVELOPER SUCCESS | "
-                f"Latency={latency}s | "
-                f"Input={input_tokens} | "
-                f"Output={output_tokens} | "
-                f"Cost=${estimated_cost}"
-            )
+            logger.info(f"DEVELOPER SUCCESS | Latency={latency}s | Input={input_tokens} | Output={output_tokens} | Cost=${estimated_cost}")
 
             validated_response["_meta"] = {
                 "latency_seconds": latency,
@@ -200,19 +156,9 @@ def generate_analysis(
 
             return validated_response
 
-        except (
-            anthropic.AnthropicError,
-            ValidationError,
-            ValueError,
-            json.JSONDecodeError
-        ) as e:
-
+        except (anthropic.AnthropicError, ValidationError, ValueError, json.JSONDecodeError) as e:
             last_error = str(e)
-
-            logger.warning(
-                f"Developer Analysis Attempt {attempt} failed: {last_error}"
-            )
-
+            logger.warning(f"Developer Attempt {attempt} failed: {last_error}")
             if attempt < MAX_RETRIES:
                 time.sleep(RETRY_DELAY * attempt)
 
@@ -220,7 +166,6 @@ def generate_analysis(
 
 
 def developer_node(state: SpecForgeState) -> SpecForgeState:
-
     logger.info("Developer Node Started")
 
     state["developer_status"] = "failed"
@@ -229,46 +174,48 @@ def developer_node(state: SpecForgeState) -> SpecForgeState:
     state["developer_scores"] = None
 
     try:
-
         api_key = os.getenv("ANTHROPIC_API_KEY")
-
         if not api_key:
             raise EnvironmentError("ANTHROPIC_API_KEY not found")
 
-        if not state.get("idea"):
+        idea = state.get("idea")
+        if not idea:
             raise ValueError("Missing product idea")
 
         client = anthropic.Anthropic(api_key=api_key)
 
-        business_analysis = state.get("business_analysis", {})
+        business_analysis = state.get("business_analysis") or {}
+
+        reduced_business_context = {
+            "business_concerns": business_analysis.get("business_concerns", []),
+            "missing_requirements": business_analysis.get("missing_requirements", []),
+            "assumptions_detected": business_analysis.get("assumptions_detected", []),
+            "recommendation": business_analysis.get("recommendation", "")
+        }
 
         rag_context = get_relevant_context(
-            f"SaaS architecture scalability backend infrastructure patterns for: {state['idea']}"
+            f"SaaS architecture scalability backend infrastructure cloud systems for: {idea}"
         )
 
         user_message = f"""
 Analyse this product idea from a software engineering perspective.
 
 PRODUCT IDEA:
-{state['idea']}
+{idea}
 
-RELEVANT ARCHITECTURE DOCUMENTS:
+RETRIEVED ARCHITECTURE CONTEXT:
 {rag_context}
 
-BUSINESS ANALYSIS:
-{json.dumps(business_analysis, indent=2)}
+BUSINESS ANALYSIS SUMMARY:
+{json.dumps(reduced_business_context)}
 
 Focus on:
-- scalability risks
-- architecture complexity
-- infrastructure challenges
-- backend/frontend complexity
+- scalability
+- architecture
+- infrastructure
+- engineering bottlenecks
 - implementation blockers
-- AI engineering risks
-- operational bottlenecks
-- unrealistic assumptions
-
-Use the retrieved architecture context in your reasoning.
+- AI system complexity
 
 Return ONLY valid JSON.
 """
@@ -276,36 +223,20 @@ Return ONLY valid JSON.
         analysis = generate_analysis(client, user_message)
 
         state["developer_status"] = "success"
-
         state["dev_concerns"] = analysis
-
         state["developer_verdict"] = analysis["verdict"]
-
         state["developer_scores"] = {
             "feasibility_score": analysis["feasibility_score"],
             "scalability_score": analysis["scalability_score"]
         }
-
-        state["developer_architecture_concerns"] = analysis[
-            "architecture_concerns"
-        ]
-
-        state["developer_scalability_risks"] = analysis[
-            "scalability_risks"
-        ]
-
-        state["developer_blockers"] = analysis[
-            "implementation_blockers"
-        ]
+        state["developer_architecture_concerns"] = analysis["architecture_concerns"]
+        state["developer_scalability_risks"] = analysis["scalability_risks"]
+        state["developer_blockers"] = analysis["implementation_blockers"]
 
         logger.info("Developer Node Completed Successfully")
 
-        return state
-
     except Exception as e:
-
         logger.exception(f"Developer Node Failed: {e}")
-
         state["developer_status"] = "failed"
 
-        return state
+    return state

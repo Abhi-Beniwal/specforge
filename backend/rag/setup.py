@@ -3,7 +3,10 @@ import chromadb
 from pathlib import Path
 
 
-CHROMA_PATH = "./chroma_db"
+CHROMA_PATH = str(
+    Path(__file__).resolve().parent.parent
+    / "chroma_db"
+)
 
 COLLECTION_NAME = "specforge_docs"
 
