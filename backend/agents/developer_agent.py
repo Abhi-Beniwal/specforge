@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .state import SpecForgeState
 from .utils import extract_json, estimate_cost, logger
-from rag.setup import get_relevant_context
+from backend.rag.setup import get_relevant_context
 
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
