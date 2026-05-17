@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 // Each agent has a key (used to match streaming events), display info, and a
@@ -287,18 +290,43 @@ function AgentOutput({ agent, data }) {
 // reason about in code reviews and interviews.
 
 export default function Home() {
-  const [phase, setPhase]       = useState("idle");      // "idle" | "running" | "done"
-  const [idea, setIdea]         = useState("");
-  const [statuses, setStatuses] = useState({});          // { agentKey: "running" | "done" }
-  const [results, setResults]   = useState({});          // { agentKey: agentOutputObject }
-  const [active, setActive]     = useState(null);        // currently viewed agent tab
-  const [projectId, setProjectId] = useState(null);
-  const [focused, setFocused]   = useState(false);
-  const [error, setError]       = useState(null);
-  const textareaRef             = useRef(null);
 
-  const completedCount = Object.values(statuses).filter(s => s === "done").length;
-  const activeAgentObj = AGENTS.find(a => statuses[a.key] === "running");
+  const router = useRouter();
+
+  const [phase, setPhase] = useState("idle");
+  const [idea, setIdea] = useState("");
+  const [statuses, setStatuses] = useState({});
+  const [results, setResults] = useState({});
+  const [active, setActive] = useState(null);
+  const [projectId, setProjectId] = useState(null);
+  const [focused, setFocused] = useState(false);
+  const [error, setError] = useState(null);
+  const textareaRef = useRef(null);
+
+  // Auth check
+  useEffect(() => {
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+
+      if (!session) {
+        router.push("/login");
+      }
+
+    });
+
+  }, []);
+
+  const completedCount =
+    Object.values(statuses).filter(
+      s => s === "done"
+    ).length;
+
+  const activeAgentObj =
+    AGENTS.find(
+      a => statuses[a.key] === "running"
+    );
+
+
 
   // ── submit ──────────────────────────────────────────────────────────────────
   // Connects to the FastAPI streaming endpoint and processes Server-Sent Events.
