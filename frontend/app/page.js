@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-// Each agent has a key (used to match streaming events), display info, and a
-// unique color. The glow value is a CSS rgba string used for box-shadow effects.
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const AGENTS = [
   { key:"business",    label:"Business Analyst",  short:"BA",  color:"#818cf8", glow:"rgba(129,140,248,0.2)", desc:"Market viability & business model" },
@@ -18,8 +15,16 @@ const AGENTS = [
   { key:"orchestrator",label:"Orchestrator",      short:"SRS", color:"#34d399", glow:"rgba(52,211,153,0.2)",  desc:"Final SRS synthesis & MVP scope" },
 ];
 
-// Verdict config maps API verdict strings to display styles.
-// Three tiers: green (good), amber (warning), red (danger), blue (neutral).
+// Maps API response keys to agent keys
+const KEY_MAP = {
+  business:     "business_analysis",
+  developer:    "dev_concerns",
+  qa:           "qa_concerns",
+  security:     "security_concerns",
+  ux:           "ux_concerns",
+  orchestrator: "final_spec",
+};
+
 const VERDICT = {
   promising:           { bg:"#020f06", b:"#16a34a", t:"#4ade80", label:"Promising" },
   needs_clarification: { bg:"#0f0800", b:"#d97706", t:"#fbbf24", label:"Needs Clarification" },
@@ -36,6 +41,7 @@ const VERDICT = {
   unstable:            { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Unstable" },
   high_risk:           { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"High Risk" },
   needs_major_testing: { bg:"#0f0800", b:"#d97706", t:"#fbbf24", label:"Needs Major Testing" },
+  needs_improvement:   { bg:"#0f0800", b:"#d97706", t:"#fbbf24", label:"Needs Improvement" },
   secure:              { bg:"#020f06", b:"#16a34a", t:"#4ade80", label:"Secure" },
   critical_risk:       { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Critical Risk" },
   high_ux_risk:        { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"High UX Risk" },
@@ -48,8 +54,6 @@ const VERDICT = {
   low:                 { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Low" },
 };
 
-// Example ideas — clickable chips that auto-fill the textarea.
-// Useful for demos and shows product thinking in interviews.
 const EXAMPLES = [
   "An AI legal doc reviewer for Indian startups",
   "SaaS platform for managing school admissions",
@@ -57,10 +61,8 @@ const EXAMPLES = [
 ];
 
 // ─── ScoreRing ────────────────────────────────────────────────────────────────
-// SVG-based circular progress indicator. Using SVG stroke-dashoffset animation
-// is more performant than CSS width transitions and gives us precise control.
 
-function ScoreRing({ value, max = 10, color, size = 56 }) {
+function ScoreRing({ value, max = 10, color, size = 54 }) {
   const r = (size - 10) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / max) * circ;
@@ -93,7 +95,7 @@ function VerdictBadge({ verdict, large }) {
       textTransform:"uppercase", background:v.bg,
       border:`1px solid ${v.b}`, color:v.t,
       fontSize: large ? 11 : 9 }}>
-      <span style={{ width: large?5:4, height: large?5:4, borderRadius:"50%",
+      <span style={{ width:large?5:4, height:large?5:4, borderRadius:"50%",
         background:v.t, flexShrink:0, boxShadow:`0 0 6px ${v.t}` }} />
       {v.label}
     </span>
@@ -120,8 +122,6 @@ function ListItems({ items, color }) {
 }
 
 // ─── AgentOutput ─────────────────────────────────────────────────────────────
-// Renders the full structured output for one agent.
-// Dynamically separates scores, verdicts, text fields, and array fields.
 
 function AgentOutput({ agent, data }) {
   if (!data) return (
@@ -151,14 +151,11 @@ function AgentOutput({ agent, data }) {
   const textFields   = Object.entries(data).filter(([k,v]) => typeof v === "string" &&
     !["role","verdict","project_viability","recommendation","final_recommendation",
       "product_summary","core_problem_statement"].includes(k));
-
-  // Metadata row (latency + cost) shown at the bottom if _meta exists
   const meta = data._meta;
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:22 }}>
 
-      {/* ── Verdict + Scores row ── */}
       {(verdict || scores.length > 0) && (
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
           flexWrap:"wrap", gap:14, padding:"16px 18px",
@@ -174,8 +171,7 @@ function AgentOutput({ agent, data }) {
           {scores.length > 0 && (
             <div style={{ display:"flex", gap:18 }}>
               {scores.map(([k,v]) => (
-                <div key={k} style={{ display:"flex", flexDirection:"column",
-                  alignItems:"center", gap:5 }}>
+                <div key={k} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
                   <ScoreRing value={v} color={agent.color} size={54} />
                   <span style={{ fontSize:8, color:"#334155", textAlign:"center",
                     textTransform:"uppercase", letterSpacing:"0.1em",
@@ -189,7 +185,6 @@ function AgentOutput({ agent, data }) {
         </div>
       )}
 
-      {/* ── Summary / Problem statement ── */}
       {summary && (
         <div style={{ padding:"13px 15px",
           background:`linear-gradient(135deg,${agent.color}08,transparent)`,
@@ -205,7 +200,6 @@ function AgentOutput({ agent, data }) {
         </div>
       )}
 
-      {/* ── Recommendation ── */}
       {recommendation && (
         <div style={{ padding:"13px 15px", background:"#07070f",
           border:"1px solid #0f0f1c", borderLeft:"3px solid #1e293b",
@@ -219,7 +213,6 @@ function AgentOutput({ agent, data }) {
         </div>
       )}
 
-      {/* ── Plain text fields ── */}
       {textFields.map(([k,v]) => (
         <div key={k}>
           <div style={{ fontSize:8, fontWeight:700, color:"#334155",
@@ -232,7 +225,6 @@ function AgentOutput({ agent, data }) {
         </div>
       ))}
 
-      {/* ── Array / list fields ── */}
       {lists.map(([k,v]) => (
         <div key={k}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:9,
@@ -252,7 +244,6 @@ function AgentOutput({ agent, data }) {
         </div>
       ))}
 
-      {/* ── Meta footer: latency + cost ── */}
       {meta && (
         <div style={{ display:"flex", gap:16, paddingTop:12,
           borderTop:"1px solid #0a0a14", flexWrap:"wrap" }}>
@@ -281,71 +272,97 @@ function AgentOutput({ agent, data }) {
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
-// Phase-based state machine:
-//   "idle"    → Hero visible, large textarea, no results
-//   "running" → Compact input, pipeline showing, results streaming in
-//   "done"    → Same as running + completion banner
-//
-// This is cleaner than managing 3-4 separate boolean flags and is easy to
-// reason about in code reviews and interviews.
+// Uses /generate-spec (single request) and animates agents one-by-one
+// using setTimeout after response arrives. Visually identical to streaming
+// but works reliably on Render free tier which buffers SSE responses.
 
 export default function Home() {
-
-  const router = useRouter();
-
-  const [phase, setPhase] = useState("idle");
-  const [idea, setIdea] = useState("");
+  const router      = useRouter();
+  const [phase, setPhase]       = useState("idle");
+  const [idea, setIdea]         = useState("");
   const [statuses, setStatuses] = useState({});
-  const [results, setResults] = useState({});
-  const [active, setActive] = useState(null);
+  const [results, setResults]   = useState({});
+  const [active, setActive]     = useState(null);
   const [projectId, setProjectId] = useState(null);
-  const [focused, setFocused] = useState(false);
-  const [error, setError] = useState(null);
+  const [focused, setFocused]   = useState(false);
+  const [error, setError]       = useState(null);
+  const [loadingText, setLoadingText] = useState("Analysing...");
   const textareaRef = useRef(null);
+  const timersRef   = useRef([]);
 
   // Auth check
   useEffect(() => {
-
     supabase.auth.getSession().then(({ data: { session } }) => {
-
-      if (!session) {
-        router.push("/login");
-      }
-
+      if (!session) router.push("/login");
     });
-
   }, []);
 
-  const completedCount =
-    Object.values(statuses).filter(
-      s => s === "done"
-    ).length;
+  const completedCount = Object.values(statuses).filter(s => s === "done").length;
+  const activeAgentObj = AGENTS.find(a => statuses[a.key] === "running");
 
-  const activeAgentObj =
-    AGENTS.find(
-      a => statuses[a.key] === "running"
-    );
+  // Cycling loading messages while waiting for backend
+  useEffect(() => {
+    if (phase !== "running") return;
+    const messages = [
+      "Analysing...",
+      "Business Analyst thinking...",
+      "Engineer reviewing architecture...",
+      "QA checking failure scenarios...",
+      "Security scanning vulnerabilities...",
+      "UX evaluating usability...",
+      "Orchestrator synthesising...",
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % messages.length;
+      setLoadingText(messages[i]);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [phase]);
 
+  // Animate agents one by one from data
+  function animateAgents(data) {
+    // Clear any previous timers
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
 
+    AGENTS.forEach((agent, i) => {
+      const dataKey = KEY_MAP[agent.key];
+      const agentData = data[dataKey];
+      if (!agentData) return;
 
-  // ── submit ──────────────────────────────────────────────────────────────────
-  // Connects to the FastAPI streaming endpoint and processes Server-Sent Events.
-  // Each agent emits: status event (started) → result event (done) → finally "done".
+      // Show as "running" first
+      const runTimer = setTimeout(() => {
+        setStatuses(prev => ({ ...prev, [agent.key]: "running" }));
+      }, i * 600);
+
+      // Then show as "done" with results
+      const doneTimer = setTimeout(() => {
+        setStatuses(prev => ({ ...prev, [agent.key]: "done" }));
+        setResults(prev => ({ ...prev, [agent.key]: agentData }));
+        setActive(prev => prev || agent.key);
+      }, i * 600 + 400);
+
+      timersRef.current.push(runTimer, doneTimer);
+    });
+  }
 
   const submit = useCallback(async () => {
     if (!idea.trim() || phase === "running") return;
+
     setPhase("running");
     setStatuses({});
     setResults({});
     setActive(null);
     setProjectId(null);
     setError(null);
+    setLoadingText("Analysing...");
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000);
+      const timeout = setTimeout(() => controller.abort(), 300000); // 5 min
 
-      const res = await fetch("https://specforge-j74n.onrender.com/generate-spec-stream", {
+      const res = await fetch("https://specforge-j74n.onrender.com/generate-spec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea }),
@@ -356,33 +373,20 @@ export default function Home() {
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
-      const reader = res.body.getReader();
-      const dec    = new TextDecoder();
+      const data = await res.json();
 
-      while (true) {
-        const { done: sd, value } = await reader.read();
-        if (sd) break;
-        const lines = dec.decode(value).split("\n").filter(l => l.startsWith("data: "));
-        for (const line of lines) {
-          try {
-            const p = JSON.parse(line.slice(6));
-            if (p.type === "status") {
-              setStatuses(prev => ({ ...prev, [p.agent]: "running" }));
-            }
-            if (p.type === "result") {
-              setStatuses(prev => ({ ...prev, [p.agent]: "done" }));
-              setResults(prev => ({ ...prev, [p.agent]: p.data }));
-              // Auto-select the first completed agent so results appear immediately
-              setActive(prev => prev || p.agent);
-            }
-            if (p.type === "done") {
-              setProjectId(p.project_id);
-              setPhase("done");
-            }
-          } catch { /* skip malformed SSE lines */ }
-        }
-      }
-   } catch (err) {
+      // Animate agents appearing one by one
+      animateAgents(data);
+
+      // Set done after all animations complete
+      const totalDelay = (AGENTS.length - 1) * 600 + 600;
+      const doneTimer = setTimeout(() => {
+        setProjectId(data.project_id);
+        setPhase("done");
+      }, totalDelay);
+      timersRef.current.push(doneTimer);
+
+    } catch (err) {
       if (err.name === "AbortError") {
         setError("Request timed out. The backend may be waking up — wait 30 seconds and try again.");
       } else if (err.message?.includes("429")) {
@@ -394,11 +398,9 @@ export default function Home() {
     }
   }, [idea, phase]);
 
-  // ── reset ───────────────────────────────────────────────────────────────────
-  // Called by "New Analysis" button. Resets to idle state and focuses the
-  // textarea so the user can immediately start typing.
-
   const reset = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
     setPhase("idle");
     setIdea("");
     setStatuses({});
@@ -406,7 +408,6 @@ export default function Home() {
     setActive(null);
     setProjectId(null);
     setError(null);
-    // Use requestAnimationFrame to wait for the DOM to update before focusing
     requestAnimationFrame(() => textareaRef.current?.focus());
   }, []);
 
@@ -416,7 +417,6 @@ export default function Home() {
 
   return (
     <>
-      {/* ── Global styles + keyframe animations ────────────────────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -432,12 +432,13 @@ export default function Home() {
         ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:2px; }
         ::selection { background:rgba(99,102,241,0.3); color:#f1f5f9; }
 
-        @keyframes spin        { to   { transform:rotate(360deg); } }
+        @keyframes spin        { to { transform:rotate(360deg); } }
         @keyframes pulseGlow   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.88)} }
         @keyframes shimmerFlow { 0%{background-position:-300% center} 100%{background-position:300% center} }
         @keyframes ambientDrift{ 0%,100%{opacity:.6} 50%{opacity:1} }
         @keyframes slideUp     { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
+        @keyframes popIn       { 0%{opacity:0;transform:scale(.85)} 60%{transform:scale(1.05)} 100%{opacity:1;transform:scale(1)} }
 
         .shimmer {
           background:linear-gradient(90deg,#6366f1 0%,#818cf8 25%,#c4b5fd 50%,#818cf8 75%,#6366f1 100%);
@@ -467,26 +468,22 @@ export default function Home() {
         .agent-btn:hover { background:#09090f; }
         .slide-up { animation:slideUp .45s cubic-bezier(.22,1,.36,1) forwards; }
         .fade-in  { animation:fadeIn  .35s ease forwards; }
+        .pop-in   { animation:popIn   .4s cubic-bezier(.22,1,.36,1) forwards; }
         .chip {
           border:1px solid #12122a; background:transparent;
           cursor:pointer; border-radius:999px;
-          font-family:'Inter',sans-serif;
-          transition:all .15s;
+          font-family:'Inter',sans-serif; transition:all .15s;
         }
         .chip:hover { background:#0d0d20; border-color:#6366f130; color:#818cf8 !important; }
         .qt-btn {
           border:1px solid #0f0f1c; background:#07070f; cursor:pointer;
-          font-family:'IBM Plex Mono',monospace; border-radius:6px;
-          transition:all .15s;
+          font-family:'IBM Plex Mono',monospace; border-radius:6px; transition:all .15s;
         }
         .qt-btn:hover { background:#0d0d1a; }
       `}</style>
 
-      {/* ── Dot grid (fixed, behind everything) ──────────────────────────────── */}
-      <div className="dot-bg" style={{ position:"fixed", inset:0, zIndex:0,
-        opacity:.35, pointerEvents:"none" }} />
+      <div className="dot-bg" style={{ position:"fixed", inset:0, zIndex:0, opacity:.35, pointerEvents:"none" }} />
 
-      {/* ── Ambient radial glows ─────────────────────────────────────────────── */}
       <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-200, left:"28%", width:640, height:640,
           background:"radial-gradient(ellipse,rgba(99,102,241,.07) 0%,transparent 70%)",
@@ -499,10 +496,9 @@ export default function Home() {
           animation:"ambientDrift 15s ease infinite 6s" }} />
       </div>
 
-      {/* ── Page wrapper ─────────────────────────────────────────────────────── */}
       <div style={{ position:"relative", zIndex:1, minHeight:"100vh", paddingBottom:80 }}>
 
-        {/* ── Navbar ───────────────────────────────────────────────────────── */}
+        {/* ── Navbar ── */}
         <nav className="glass" style={{
           position:"sticky", top:0, zIndex:200,
           borderBottom:"1px solid #0a0a14", height:54,
@@ -510,31 +506,24 @@ export default function Home() {
           padding:"0 32px",
         }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800,
-              fontSize:17, letterSpacing:"-0.025em" }}>
-              Spec<span style={{ color:"#6366f1",
-                textShadow:"0 0 24px rgba(99,102,241,.5)" }}>Forge</span>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:17, letterSpacing:"-0.025em" }}>
+              Spec<span style={{ color:"#6366f1", textShadow:"0 0 24px rgba(99,102,241,.5)" }}>Forge</span>
             </span>
             <span style={{ fontSize:8, padding:"2px 7px", borderRadius:4,
               background:"linear-gradient(135deg,#0d0a2e,#12103a)",
               border:"1px solid #2e1f8a40", color:"#818cf8",
-              fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>
-              BETA
-            </span>
+              fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>BETA</span>
           </div>
-
-          {/* Live status pill */}
           <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-            {isRunning && activeAgentObj && (
+            {isRunning && (
               <div style={{ display:"flex", alignItems:"center", gap:7,
                 padding:"4px 12px", background:"#0f0900",
                 border:"1px solid #92400e40", borderRadius:999 }}>
                 <span style={{ width:5, height:5, borderRadius:"50%", background:"#f59e0b",
                   animation:"pulseGlow 1.5s ease infinite",
                   boxShadow:"0 0 8px #f59e0b", display:"inline-block" }} />
-                <span style={{ fontSize:10, color:"#f59e0b",
-                  fontFamily:"'IBM Plex Mono',monospace" }}>
-                  {activeAgentObj.label} analysing
+                <span style={{ fontSize:10, color:"#f59e0b", fontFamily:"'IBM Plex Mono',monospace" }}>
+                  {loadingText}
                 </span>
               </div>
             )}
@@ -544,14 +533,12 @@ export default function Home() {
                 border:"1px solid #16a34a40", borderRadius:999 }}>
                 <span style={{ width:5, height:5, borderRadius:"50%", background:"#34d399",
                   boxShadow:"0 0 8px #34d399", display:"inline-block" }} />
-                <span style={{ fontSize:10, color:"#34d399",
-                  fontFamily:"'IBM Plex Mono',monospace" }}>
+                <span style={{ fontSize:10, color:"#34d399", fontFamily:"'IBM Plex Mono',monospace" }}>
                   {completedCount}/6 complete
                 </span>
               </div>
             )}
-            <span style={{ fontSize:11, color:"#1e293b",
-              fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em" }}>
+            <span style={{ fontSize:11, color:"#1e293b", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em" }}>
               Multi-Agent SRS Generator
             </span>
           </div>
@@ -559,78 +546,57 @@ export default function Home() {
 
         <div style={{ maxWidth:1280, margin:"0 auto", padding:"0 32px" }}>
 
-          {/* ── Hero section ─────────────────────────────────────────────────
-              Uses max-height + opacity transition so it collapses smoothly
-              when the user submits, instead of an abrupt unmount.          */}
+          {/* ── Hero (collapses smoothly on submit) ── */}
           <div style={{
-            maxHeight: isIdle ? 600 : 0,
-            opacity: isIdle ? 1 : 0,
+            maxHeight: isIdle ? 600 : 0, opacity: isIdle ? 1 : 0,
             overflow:"hidden",
             transition:"max-height .6s cubic-bezier(.22,1,.36,1), opacity .4s ease",
           }}>
             <div style={{ paddingTop:76, paddingBottom:36, position:"relative" }} className="slide-up">
+              <div style={{ position:"absolute", top:-40, left:"50%", transform:"translateX(-50%)",
+                width:700, height:280, pointerEvents:"none",
+                background:"radial-gradient(ellipse at top,rgba(99,102,241,.1) 0%,transparent 65%)" }} />
 
-              {/* Hero radial glow (behind the heading) */}
-              <div style={{ position:"absolute", top:-40, left:"50%",
-                transform:"translateX(-50%)", width:700, height:280,
-                background:"radial-gradient(ellipse at top,rgba(99,102,241,.1) 0%,transparent 65%)",
-                pointerEvents:"none" }} />
-
-              {/* Badge pill */}
               <div style={{ display:"inline-flex", alignItems:"center", gap:8,
-                padding:"6px 16px",
-                background:"linear-gradient(135deg,#07051a,#0a0820)",
+                padding:"6px 16px", background:"linear-gradient(135deg,#07051a,#0a0820)",
                 border:"1px solid #2d1f6e50", borderRadius:999, marginBottom:28,
                 boxShadow:"0 0 24px rgba(99,102,241,.1)" }}>
                 <span style={{ display:"flex", gap:3 }}>
                   {AGENTS.slice(0,5).map((a,i) => (
                     <span key={i} style={{ width:4, height:4, borderRadius:"50%",
-                      background:a.color, boxShadow:`0 0 6px ${a.color}`,
-                      display:"inline-block" }} />
+                      background:a.color, boxShadow:`0 0 6px ${a.color}`, display:"inline-block" }} />
                   ))}
                 </span>
-                <span style={{ fontSize:10, color:"#818cf8",
-                  fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>
+                <span style={{ fontSize:10, color:"#818cf8", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>
                   5 AI AGENTS · DEBATE MODE · RAG-GROUNDED
                 </span>
               </div>
 
-              {/* Headline */}
-              <h1 style={{ fontFamily:"'Syne',sans-serif",
-                fontSize:"clamp(34px,5.4vw,70px)",
-                fontWeight:800, lineHeight:1.03, letterSpacing:"-0.03em",
-                marginBottom:18, position:"relative" }}>
+              <h1 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(34px,5.4vw,70px)",
+                fontWeight:800, lineHeight:1.03, letterSpacing:"-0.03em", marginBottom:18 }}>
                 Your idea, stress&#8209;tested<br />
                 <span className="shimmer">from every angle</span>
               </h1>
 
-              {/* Subtext */}
-              <p style={{ fontSize:15, color:"#475569", maxWidth:520,
-                lineHeight:1.7, marginBottom:28 }}>
-                Five AI specialists debate your product idea and synthesize a
-                complete Software Requirements Specification — with MVP scope,
-                security analysis, and implementation priorities.
+              <p style={{ fontSize:15, color:"#475569", maxWidth:520, lineHeight:1.7, marginBottom:28 }}>
+                Five AI specialists debate your product idea and synthesize a complete Software Requirements
+                Specification — with MVP scope, security analysis, and implementation priorities.
               </p>
 
-              {/* Agent role chips */}
               <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
                 {AGENTS.slice(0,5).map(a => (
-                  <span key={a.key} style={{ display:"inline-flex", alignItems:"center",
-                    gap:5, fontSize:10, padding:"4px 11px", borderRadius:999,
-                    background:`${a.color}0d`, border:`1px solid ${a.color}25`,
-                    color:a.color, fontFamily:"'IBM Plex Mono',monospace",
-                    letterSpacing:"0.04em" }}>
-                    <span style={{ width:4, height:4, borderRadius:"50%",
-                      background:a.color, boxShadow:`0 0 6px ${a.color}` }} />
+                  <span key={a.key} style={{ display:"inline-flex", alignItems:"center", gap:5,
+                    fontSize:10, padding:"4px 11px", borderRadius:999,
+                    background:`${a.color}0d`, border:`1px solid ${a.color}25`, color:a.color,
+                    fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.04em" }}>
+                    <span style={{ width:4, height:4, borderRadius:"50%", background:a.color, boxShadow:`0 0 6px ${a.color}` }} />
                     {a.label}
                   </span>
                 ))}
               </div>
 
-              {/* Example ideas — click to fill the textarea */}
               <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                <span style={{ fontSize:10, color:"#1e293b",
-                  fontFamily:"'IBM Plex Mono',monospace" }}>TRY →</span>
+                <span style={{ fontSize:10, color:"#1e293b", fontFamily:"'IBM Plex Mono',monospace" }}>TRY →</span>
                 {EXAMPLES.map((e,i) => (
                   <button key={i} className="chip"
                     onClick={() => { setIdea(e); textareaRef.current?.focus(); }}
@@ -642,20 +608,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Input area ───────────────────────────────────────────────────
-              Stays visible at all phases. Padding/height adjusts via inline
-              style based on whether we're in idle or running/done phase.   */}
-          <div style={{ paddingTop: isIdle ? 0 : 24, paddingBottom:20,
-            transition:"padding .5s ease" }}>
-
-            {/* Gradient border wrapper — lights up on focus using a 1px padding trick */}
+          {/* ── Input ── */}
+          <div style={{ paddingTop:isIdle?0:24, paddingBottom:20, transition:"padding .5s ease" }}>
             <div style={{ borderRadius:14, padding:1,
-              background: focused
-                ? "linear-gradient(135deg,#4338ca,#7c3aed,#4338ca)"
-                : "#0f0f1c",
+              background:focused ? "linear-gradient(135deg,#4338ca,#7c3aed,#4338ca)" : "#0f0f1c",
               transition:"background .3s, box-shadow .3s",
-              boxShadow: focused ? "0 0 32px rgba(99,102,241,.18)" : "none" }}>
-
+              boxShadow:focused ? "0 0 32px rgba(99,102,241,.18)" : "none" }}>
               <div style={{ borderRadius:13, background:"#08081a", overflow:"hidden" }}>
                 <textarea
                   ref={textareaRef}
@@ -664,32 +622,26 @@ export default function Home() {
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
                   onKeyDown={e => { if (e.key==="Enter" && (e.metaKey||e.ctrlKey)) submit(); }}
-                  placeholder={isIdle
-                    ? "Describe your product idea in as much detail as possible..."
-                    : "Analyse another idea..."}
+                  placeholder={isIdle ? "Describe your product idea in as much detail as possible..." : "Analyse another idea..."}
                   rows={isIdle ? 4 : 2}
-                  style={{ width:"100%", background:"transparent", border:"none",
-                    outline:"none", resize:"none", fontFamily:"'Inter',sans-serif",
-                    fontSize:14, lineHeight:1.7, color:"#e2e8f0", caretColor:"#6366f1",
-                    padding: isIdle ? "18px 18px 56px 18px" : "14px 18px 14px 18px",
-                    transition:"padding .45s ease, rows .45s ease" }}
+                  style={{ width:"100%", background:"transparent", border:"none", outline:"none",
+                    resize:"none", fontFamily:"'Inter',sans-serif", fontSize:14,
+                    lineHeight:1.7, color:"#e2e8f0", caretColor:"#6366f1",
+                    padding:isIdle ? "18px 18px 56px 18px" : "14px 18px 14px 18px",
+                    transition:"padding .45s ease" }}
                 />
-
-                {/* Bottom toolbar (only in idle phase) */}
                 {isIdle && (
                   <div style={{ padding:"10px 18px", borderTop:"1px solid #0d0d1a",
                     display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                       {["⌘","↵"].map((k,i) => (
-                        <kbd key={i} style={{ fontSize:10, padding:"2px 7px",
-                          background:"#07070f", border:"1px solid #0f0f1c",
-                          borderRadius:4, color:"#1e293b",
+                        <kbd key={i} style={{ fontSize:10, padding:"2px 7px", background:"#07070f",
+                          border:"1px solid #0f0f1c", borderRadius:4, color:"#1e293b",
                           fontFamily:"'IBM Plex Mono',monospace" }}>{k}</kbd>
                       ))}
                       <span style={{ fontSize:10, color:"#1e293b" }}>to submit</span>
                     </div>
-                    <span style={{ fontSize:10, color:"#1e293b",
-                      fontFamily:"'IBM Plex Mono',monospace" }}>
+                    <span style={{ fontSize:10, color:"#1e293b", fontFamily:"'IBM Plex Mono',monospace" }}>
                       {idea.length > 0 ? `${idea.length} chars` : ""}
                     </span>
                   </div>
@@ -697,40 +649,31 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Submit button — always below the textarea, right-aligned */}
             <div style={{ display:"flex", justifyContent:"flex-end", marginTop:8 }}>
-              <button onClick={submit}
-                disabled={isRunning || !idea.trim()}
-                style={{
-                  padding:"9px 22px",
-                  background: isRunning
-                    ? "#0d0a28"
-                    : "linear-gradient(135deg,#4338ca,#6d28d9)",
-                  border:"1px solid",
-                  borderColor: isRunning ? "#1e1b4b" : "#5b4dcc",
-                  borderRadius:9,
-                  color: isRunning ? "#4338ca" : "#fff",
+              <button onClick={submit} disabled={isRunning || !idea.trim()}
+                style={{ padding:"9px 22px",
+                  background:isRunning ? "#0d0a28" : "linear-gradient(135deg,#4338ca,#6d28d9)",
+                  border:"1px solid", borderColor:isRunning?"#1e1b4b":"#5b4dcc",
+                  borderRadius:9, color:isRunning?"#4338ca":"#fff",
                   fontSize:12, fontWeight:600,
-                  opacity:(!idea.trim()||isRunning) ? .45 : 1,
-                  cursor:(!idea.trim()||isRunning) ? "not-allowed" : "pointer",
-                  transition:"all .2s",
-                  display:"inline-flex", alignItems:"center", gap:8,
-                  boxShadow: isRunning ? "none" : "0 0 22px rgba(99,102,241,.28)",
-                  fontFamily:"'Inter',sans-serif",
-                }}>
+                  opacity:(!idea.trim()||isRunning)?.45:1,
+                  cursor:(!idea.trim()||isRunning)?"not-allowed":"pointer",
+                  transition:"all .2s", display:"inline-flex", alignItems:"center", gap:8,
+                  boxShadow:isRunning?"none":"0 0 22px rgba(99,102,241,.28)",
+                  fontFamily:"'Inter',sans-serif" }}>
                 {isRunning ? (
                   <>
                     <span style={{ width:11, height:11, borderRadius:"50%",
                       border:"2px solid #1e1b4b", borderTopColor:"#818cf8",
                       animation:"spin .7s linear infinite", display:"inline-block" }} />
-                    Analysing
+                    {loadingText}
                   </>
                 ) : "Generate Spec →"}
               </button>
             </div>
           </div>
 
-          {/* ── Error banner ──────────────────────────────────────────────── */}
+          {/* ── Error banner ── */}
           {error && (
             <div className="slide-up" style={{ marginBottom:16, padding:"12px 16px",
               background:"#0f0008", border:"1px solid #7f1d1d", borderRadius:10,
@@ -743,31 +686,22 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Agent Pipeline ────────────────────────────────────────────────
-              Shows when phase is running or done.
-              Each node: pending → running (amber pulse) → done (colored glow).
-              Clicking a done node jumps to that agent's results.           */}
+          {/* ── Pipeline ── */}
           <div style={{
-            maxHeight: isIdle ? 0 : 130,
-            opacity: isIdle ? 0 : 1,
-            overflow:"hidden",
-            transition:"max-height .5s ease, opacity .4s ease",
-            marginBottom: isIdle ? 0 : 18,
+            maxHeight:isIdle?0:130, opacity:isIdle?0:1,
+            overflow:"hidden", transition:"max-height .5s ease, opacity .4s ease",
+            marginBottom:isIdle?0:18,
           }}>
             <div className="card" style={{ padding:"18px 24px" }}>
               <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
                 <span style={{ fontSize:8, fontWeight:700, color:"#1e293b",
                   textTransform:"uppercase", letterSpacing:"0.14em",
-                  fontFamily:"'IBM Plex Mono',monospace" }}>
-                  Agent Pipeline
-                </span>
+                  fontFamily:"'IBM Plex Mono',monospace" }}>Agent Pipeline</span>
                 <div style={{ flex:1, height:1, background:"#0a0a14", margin:"0 12px" }} />
-                <span style={{ fontSize:9, color:"#1e293b",
-                  fontFamily:"'IBM Plex Mono',monospace" }}>
+                <span style={{ fontSize:9, color:"#1e293b", fontFamily:"'IBM Plex Mono',monospace" }}>
                   {completedCount}/6
                 </span>
               </div>
-
               <div style={{ display:"flex", alignItems:"center" }}>
                 {AGENTS.map((agent,i) => {
                   const s = statuses[agent.key];
@@ -779,49 +713,39 @@ export default function Home() {
                         style={{ display:"flex", flexDirection:"column", alignItems:"center",
                           gap:6, flex:1, padding:"2px", border:"none",
                           background:"transparent", cursor:isDn?"pointer":"default" }}>
-
-                        {/* Node */}
                         <div style={{ position:"relative" }}>
                           {isRun && (
                             <div style={{ position:"absolute", inset:-5, borderRadius:"50%",
                               border:`1px solid ${agent.color}35`,
                               animation:"pulseGlow 2s ease infinite" }} />
                           )}
-                          <div style={{ width:36, height:36, borderRadius:"50%",
+                          <div style={{
+                            width:36, height:36, borderRadius:"50%",
                             display:"flex", alignItems:"center", justifyContent:"center",
                             background:isDn?`${agent.color}14`:isRun?"#100c00":"#07070f",
                             border:`2px solid ${isDn?agent.color:isRun?"#f59e0b":"#0f0f1c"}`,
                             transition:"all .4s cubic-bezier(.22,1,.36,1)",
-                            boxShadow:isDn?`0 0 16px ${agent.glow}`
-                              :isRun?"0 0 12px rgba(245,158,11,.28)":"none" }}>
+                            boxShadow:isDn?`0 0 16px ${agent.glow}`:isRun?"0 0 12px rgba(245,158,11,.28)":"none",
+                            ...(isDn ? { animation:"popIn .4s cubic-bezier(.22,1,.36,1)" } : {})
+                          }}>
                             {isDn
-                              ? <span style={{ color:agent.color, fontSize:13, fontWeight:700,
-                                  textShadow:`0 0 10px ${agent.color}` }}>✓</span>
+                              ? <span style={{ color:agent.color, fontSize:13, fontWeight:700, textShadow:`0 0 10px ${agent.color}` }}>✓</span>
                               : isRun
-                              ? <span style={{ width:7, height:7, borderRadius:"50%",
-                                  background:"#f59e0b", display:"block",
-                                  animation:"pulseGlow 1s ease infinite",
-                                  boxShadow:"0 0 8px #f59e0b" }} />
-                              : <span style={{ color:"#1e293b", fontSize:10, fontWeight:600,
-                                  fontFamily:"'IBM Plex Mono',monospace" }}>{i+1}</span>}
+                              ? <span style={{ width:7, height:7, borderRadius:"50%", background:"#f59e0b",
+                                  display:"block", animation:"pulseGlow 1s ease infinite", boxShadow:"0 0 8px #f59e0b" }} />
+                              : <span style={{ color:"#1e293b", fontSize:10, fontWeight:600, fontFamily:"'IBM Plex Mono',monospace" }}>{i+1}</span>
+                            }
                           </div>
                         </div>
-
-                        {/* Label */}
-                        <span style={{ fontSize:8, fontWeight:600,
-                          fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em",
-                          color:isDn?agent.color:isRun?"#f59e0b":"#1e293b",
+                        <span style={{ fontSize:8, fontWeight:600, fontFamily:"'IBM Plex Mono',monospace",
+                          letterSpacing:"0.05em", color:isDn?agent.color:isRun?"#f59e0b":"#1e293b",
                           transition:"color .3s", whiteSpace:"nowrap" }}>
                           {agent.short}
                         </span>
                       </button>
-
-                      {/* Connector line */}
                       {i < AGENTS.length-1 && (
-                        <div style={{ flex:"0 0 14px", height:1, background:"#0a0a14",
-                          position:"relative", overflow:"hidden" }}>
-                          <div style={{ position:"absolute", inset:0,
-                            background:isDn?agent.color:"transparent",
+                        <div style={{ flex:"0 0 14px", height:1, background:"#0a0a14", position:"relative", overflow:"hidden" }}>
+                          <div style={{ position:"absolute", inset:0, background:isDn?agent.color:"transparent",
                             opacity:.3, transition:"background .5s ease" }} />
                         </div>
                       )}
@@ -832,27 +756,21 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Results layout ────────────────────────────────────────────────
-              Sidebar (agent list + verdicts) + main panel (scrollable output).
-              Uses CSS Grid for the split layout.                            */}
+          {/* ── Results ── */}
           {Object.keys(results).length > 0 && (
-            <div className="fade-in" style={{ display:"grid",
-              gridTemplateColumns:"220px 1fr", gap:14, marginBottom:32 }}>
+            <div className="fade-in" style={{ display:"grid", gridTemplateColumns:"220px 1fr",
+              gap:14, marginBottom:32 }}>
 
               {/* Sidebar */}
-              <div className="card" style={{ overflow:"hidden",
-                position:"sticky", top:66, height:"fit-content" }}>
+              <div className="card" style={{ overflow:"hidden", position:"sticky", top:66, height:"fit-content" }}>
                 <div style={{ padding:"11px 15px", borderBottom:"1px solid #0a0a14",
                   display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                  <span style={{ fontSize:8, fontWeight:700, color:"#1e293b",
-                    textTransform:"uppercase", letterSpacing:"0.14em",
-                    fontFamily:"'IBM Plex Mono',monospace" }}>Agents</span>
-                  <span style={{ fontSize:9, color:"#1e293b",
-                    fontFamily:"'IBM Plex Mono',monospace" }}>
+                  <span style={{ fontSize:8, fontWeight:700, color:"#1e293b", textTransform:"uppercase",
+                    letterSpacing:"0.14em", fontFamily:"'IBM Plex Mono',monospace" }}>Agents</span>
+                  <span style={{ fontSize:9, color:"#1e293b", fontFamily:"'IBM Plex Mono',monospace" }}>
                     {Object.keys(results).length}/{AGENTS.length}
                   </span>
                 </div>
-
                 {AGENTS.filter(a => results[a.key]).map(agent => {
                   const result  = results[agent.key];
                   const verdict = result?.verdict || result?.project_viability;
@@ -863,17 +781,12 @@ export default function Home() {
                       onClick={() => setActive(agent.key)}
                       style={{ padding:"11px 15px",
                         borderLeft:`2px solid ${isActive?agent.color:"transparent"}`,
-                        background:isActive
-                          ? `linear-gradient(90deg,${agent.color}08,transparent)`
-                          : "transparent",
+                        background:isActive?`linear-gradient(90deg,${agent.color}08,transparent)`:"transparent",
                         display:"flex", flexDirection:"column", gap:5 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <div style={{ width:6, height:6, borderRadius:"50%",
-                          background:agent.color, flexShrink:0,
-                          boxShadow:isActive?`0 0 8px ${agent.color}`:"none",
-                          transition:"box-shadow .2s" }} />
-                        <span style={{ fontSize:11, fontWeight:500,
-                          color:isActive?"#e2e8f0":"#475569",
+                        <div style={{ width:6, height:6, borderRadius:"50%", background:agent.color, flexShrink:0,
+                          boxShadow:isActive?`0 0 8px ${agent.color}`:"none", transition:"box-shadow .2s" }} />
+                        <span style={{ fontSize:11, fontWeight:500, color:isActive?"#e2e8f0":"#475569",
                           transition:"color .15s", lineHeight:1.2 }}>
                           {agent.label}
                         </span>
@@ -882,12 +795,10 @@ export default function Home() {
                         <div style={{ marginLeft:14 }}>
                           <span style={{ display:"inline-flex", alignItems:"center", gap:4,
                             fontSize:8, padding:"2px 8px", borderRadius:999,
-                            background:vCfg?.bg||"#07070f",
-                            border:`1px solid ${vCfg?.b||"#0f0f1c"}`,
-                            color:vCfg?.t||"#475569", fontWeight:700,
-                            letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                            <span style={{ width:3, height:3, borderRadius:"50%",
-                              background:vCfg?.t||"#475569" }} />
+                            background:vCfg?.bg||"#07070f", border:`1px solid ${vCfg?.b||"#0f0f1c"}`,
+                            color:vCfg?.t||"#475569", fontWeight:700, letterSpacing:"0.08em",
+                            textTransform:"uppercase" }}>
+                            <span style={{ width:3, height:3, borderRadius:"50%", background:vCfg?.t||"#475569" }} />
                             {vCfg?.label||verdict}
                           </span>
                         </div>
@@ -897,61 +808,40 @@ export default function Home() {
                 })}
               </div>
 
-              {/* Main content panel */}
+              {/* Main panel */}
               <div className="card" style={{ overflow:"hidden", minHeight:400 }}>
                 {active && (() => {
                   const agent = AGENTS.find(a => a.key === active);
                   if (!agent) return null;
                   return (
                     <>
-                      {/* Panel header */}
                       <div style={{ padding:"15px 24px", borderBottom:"1px solid #0a0a14",
                         background:`linear-gradient(135deg,${agent.color}06,transparent 60%)`,
                         display:"flex", alignItems:"center", gap:12 }}>
-                        {/* Agent dot avatar */}
                         <div style={{ width:34, height:34, borderRadius:"50%", flexShrink:0,
-                          background:`${agent.color}10`,
-                          border:`1.5px solid ${agent.color}30`,
+                          background:`${agent.color}10`, border:`1.5px solid ${agent.color}30`,
                           display:"flex", alignItems:"center", justifyContent:"center",
                           boxShadow:`0 0 16px ${agent.glow}` }}>
-                          <span style={{ width:10, height:10, borderRadius:"50%",
-                            background:agent.color,
+                          <span style={{ width:10, height:10, borderRadius:"50%", background:agent.color,
                             boxShadow:`0 0 10px ${agent.color},0 0 22px ${agent.color}60` }} />
                         </div>
                         <div style={{ flex:1 }}>
-                          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700,
-                            fontSize:14, color:"#f1f5f9", letterSpacing:"-0.015em" }}>
-                            {agent.label}
-                          </div>
-                          <div style={{ fontSize:10, color:"#334155", marginTop:2 }}>
-                            {agent.desc}
-                          </div>
+                          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14,
+                            color:"#f1f5f9", letterSpacing:"-0.015em" }}>{agent.label}</div>
+                          <div style={{ fontSize:10, color:"#334155", marginTop:2 }}>{agent.desc}</div>
                         </div>
-                        {/* Quick-switch buttons for other completed agents */}
-                        <div style={{ display:"flex", gap:4, flexWrap:"wrap",
-                          justifyContent:"flex-end" }}>
+                        <div style={{ display:"flex", gap:4, flexWrap:"wrap", justifyContent:"flex-end" }}>
                           {AGENTS.filter(a => results[a.key] && a.key !== active).map(a => (
                             <button key={a.key} className="qt-btn"
                               onClick={() => setActive(a.key)}
-                              style={{ fontSize:8, padding:"4px 9px", color:"#334155",
-                                letterSpacing:"0.06em" }}
-                              onMouseEnter={e => {
-                                e.currentTarget.style.background=`${a.color}10`;
-                                e.currentTarget.style.borderColor=`${a.color}30`;
-                                e.currentTarget.style.color=a.color;
-                              }}
-                              onMouseLeave={e => {
-                                e.currentTarget.style.background="#07070f";
-                                e.currentTarget.style.borderColor="#0f0f1c";
-                                e.currentTarget.style.color="#334155";
-                              }}>
+                              style={{ fontSize:8, padding:"4px 9px", color:"#334155", letterSpacing:"0.06em" }}
+                              onMouseEnter={e => { e.currentTarget.style.background=`${a.color}10`; e.currentTarget.style.borderColor=`${a.color}30`; e.currentTarget.style.color=a.color; }}
+                              onMouseLeave={e => { e.currentTarget.style.background="#07070f"; e.currentTarget.style.borderColor="#0f0f1c"; e.currentTarget.style.color="#334155"; }}>
                               {a.short}
                             </button>
                           ))}
                         </div>
                       </div>
-
-                      {/* Scrollable agent output */}
                       <div style={{ padding:"24px 28px", maxHeight:680, overflowY:"auto" }}>
                         <AgentOutput agent={agent} data={results[active]} />
                       </div>
@@ -962,16 +852,11 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Completion banner ─────────────────────────────────────────────
-              Uses max-height transition so it slides in smoothly.
-              "New Analysis" calls reset() which uses requestAnimationFrame
-              to focus the textarea after the DOM re-renders.               */}
+          {/* ── Completion banner ── */}
           <div style={{
-            maxHeight: isDone ? 100 : 0,
-            opacity: isDone ? 1 : 0,
-            overflow:"hidden",
-            transition:"max-height .5s ease, opacity .4s ease",
-            marginBottom: isDone ? 32 : 0,
+            maxHeight:isDone?100:0, opacity:isDone?1:0,
+            overflow:"hidden", transition:"max-height .5s ease, opacity .4s ease",
+            marginBottom:isDone?32:0,
           }}>
             <div style={{ padding:"16px 24px",
               background:"linear-gradient(135deg,#020d07,#030f08)",
@@ -979,16 +864,13 @@ export default function Home() {
               display:"flex", alignItems:"center", justifyContent:"space-between",
               boxShadow:"0 0 32px rgba(52,211,153,.04)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-                <div style={{ width:34, height:34, borderRadius:"50%",
-                  background:"#052e16", border:"1px solid #16a34a40",
-                  display:"flex", alignItems:"center", justifyContent:"center",
+                <div style={{ width:34, height:34, borderRadius:"50%", background:"#052e16",
+                  border:"1px solid #16a34a40", display:"flex", alignItems:"center", justifyContent:"center",
                   boxShadow:"0 0 16px rgba(52,211,153,.18)" }}>
-                  <span style={{ color:"#4ade80", fontSize:14,
-                    textShadow:"0 0 12px #4ade80" }}>✓</span>
+                  <span style={{ color:"#4ade80", fontSize:14, textShadow:"0 0 12px #4ade80" }}>✓</span>
                 </div>
                 <div>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#4ade80",
-                    letterSpacing:"-0.01em" }}>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#4ade80", letterSpacing:"-0.01em" }}>
                     Specification generated &amp; saved
                   </p>
                   {projectId && (
@@ -999,75 +881,51 @@ export default function Home() {
                   )}
                 </div>
               </div>
-
               <button onClick={reset}
                 style={{ fontSize:11, padding:"7px 16px", background:"transparent",
                   border:"1px solid #16a34a30", color:"#4ade80", borderRadius:7,
-                  cursor:"pointer", fontFamily:"'Inter',sans-serif",
-                  transition:"all .15s" }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background="#052e16";
-                  e.currentTarget.style.borderColor="#16a34a60";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background="transparent";
-                  e.currentTarget.style.borderColor="#16a34a30";
-                }}>
+                  cursor:"pointer", fontFamily:"'Inter',sans-serif", transition:"all .15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background="#052e16"; e.currentTarget.style.borderColor="#16a34a60"; }}
+                onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor="#16a34a30"; }}>
                 New Analysis →
               </button>
             </div>
           </div>
 
-          {/* ── Feature cards (idle only) ─────────────────────────────────────
-              Hidden with max-height when not idle.                          */}
+          {/* ── Feature cards (idle only) ── */}
           <div style={{
-            maxHeight: isIdle ? 300 : 0,
-            opacity: isIdle ? 1 : 0,
-            overflow:"hidden",
-            transition:"max-height .6s ease, opacity .4s ease",
+            maxHeight:isIdle?300:0, opacity:isIdle?1:0,
+            overflow:"hidden", transition:"max-height .6s ease, opacity .4s ease",
           }}>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)",
-              gap:12, paddingTop:4 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, paddingTop:4 }}>
               {[
-                { icon:"◈", color:"#818cf8",
-                  title:"Multi-Agent Debate",
+                { icon:"◈", color:"#818cf8", title:"Multi-Agent Debate",
                   desc:"5 specialized agents each contribute a distinct perspective. Conflicts are surfaced explicitly — not averaged away.",
                   tags:["BA","Dev","QA","Sec","UX"] },
-                { icon:"⬡", color:"#38bdf8",
-                  title:"RAG-Grounded Analysis",
+                { icon:"⬡", color:"#38bdf8", title:"RAG-Grounded Analysis",
                   desc:"Agents retrieve from GDPR, OWASP, DPDP Act, and SaaS architecture docs before responding — not just training data.",
                   tags:["GDPR","OWASP","DPDP"] },
-                { icon:"◆", color:"#34d399",
-                  title:"Production SRS Output",
+                { icon:"◆", color:"#34d399", title:"Production SRS Output",
                   desc:"The Orchestrator synthesizes into MVP scope, functional requirements, security requirements, and launch risks.",
                   tags:["SRS","MVP","Risks"] },
               ].map((card,i) => (
-                <div key={i} className="card"
-                  style={{ padding:"20px 22px",
-                    animationDelay:`${i*.1}s`, animationFillMode:"both" }}>
-                  <div style={{ display:"flex", alignItems:"flex-start",
-                    justifyContent:"space-between", marginBottom:14 }}>
-                    <span style={{ fontSize:22, color:card.color,
-                      textShadow:`0 0 18px ${card.color}60` }}>{card.icon}</span>
-                    <div style={{ display:"flex", gap:4, flexWrap:"wrap",
-                      justifyContent:"flex-end" }}>
+                <div key={i} className="card" style={{ padding:"20px 22px" }}>
+                  <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14 }}>
+                    <span style={{ fontSize:22, color:card.color, textShadow:`0 0 18px ${card.color}60` }}>{card.icon}</span>
+                    <div style={{ display:"flex", gap:4, flexWrap:"wrap", justifyContent:"flex-end" }}>
                       {card.tags.map(t => (
                         <span key={t} style={{ fontSize:7, padding:"2px 6px",
-                          background:`${card.color}0d`,
-                          border:`1px solid ${card.color}20`, color:card.color,
-                          borderRadius:4, fontFamily:"'IBM Plex Mono',monospace",
+                          background:`${card.color}0d`, border:`1px solid ${card.color}20`,
+                          color:card.color, borderRadius:4, fontFamily:"'IBM Plex Mono',monospace",
                           letterSpacing:"0.06em" }}>{t}</span>
                       ))}
                     </div>
                   </div>
-                  <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700,
-                    fontSize:13.5, color:"#94a3b8", marginBottom:8,
-                    letterSpacing:"-0.01em" }}>
+                  <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13.5,
+                    color:"#94a3b8", marginBottom:8, letterSpacing:"-0.01em" }}>
                     {card.title}
                   </div>
-                  <div style={{ fontSize:12, color:"#334155", lineHeight:1.65 }}>
-                    {card.desc}
-                  </div>
+                  <div style={{ fontSize:12, color:"#334155", lineHeight:1.65 }}>{card.desc}</div>
                 </div>
               ))}
             </div>
