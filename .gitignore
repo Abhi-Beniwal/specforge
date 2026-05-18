@@ -227,4 +227,3 @@ node_modules/
 .env.local
 .env.production
 
-backend/chroma_db/
