@@ -342,11 +342,17 @@ export default function Home() {
     setError(null);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/generate-spec-stream", {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000);
+
+      const res = await fetch("https://specforge-j74n.onrender.com/generate-spec-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
@@ -376,8 +382,12 @@ export default function Home() {
           } catch { /* skip malformed SSE lines */ }
         }
       }
-    } catch (err) {
-      setError(err.message || "Connection failed. Is the backend running?");
+   } catch (err) {
+      if (err.name === "AbortError") {
+        setError("Request timed out. The backend may be waking up — wait 30 seconds and try again.");
+      } else {
+        setError(err.message || "Connection failed.");
+      }
       setPhase("idle");
     }
   }, [idea, phase]);

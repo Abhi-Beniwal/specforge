@@ -30,7 +30,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://specforge-chi.vercel.app/"
+        "https://specforge-chi.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
