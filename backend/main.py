@@ -13,14 +13,14 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 
-from agents.business_agent import business_analyst_node
-from agents.developer_agent import developer_node
-from agents.qa_agent import qa_node
-from agents.security_agent import security_node
-from agents.ux_agent import ux_node
-from agents.orchestrator_agent import orchestrator_node
-from agents.pipeline import spec_pipeline
-from database.db import save_project, save_specification
+from backend.agents.business_agent import business_analyst_node
+from backend.agents.developer_agent import developer_node
+from backend.agents.qa_agent import qa_node
+from backend.agents.security_agent import security_node
+from backend.agents.ux_agent import ux_node
+from backend.agents.orchestrator_agent import orchestrator_node
+from backend.agents.pipeline import spec_pipeline
+from backend.database.db import save_project, save_specification
 
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
