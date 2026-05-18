@@ -151,10 +151,12 @@ async def generate_spec_stream(request: Request, body: IdeaRequest):
             yield f"data: {json.dumps({'type': 'done', 'project_id': None})}\n\n"
 
     return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"
-        }
-    )
+    event_generator(),
+    media_type="text/event-stream",
+    headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+        "Connection": "keep-alive",
+        "Transfer-Encoding": "chunked",
+    }
+)
