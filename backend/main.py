@@ -2,29 +2,41 @@ import os
 import json
 
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
 
-from backend.agents.business_agent import business_analyst_node
-from backend.agents.developer_agent import developer_node
-from backend.agents.qa_agent import qa_node
-from backend.agents.security_agent import security_node
-from backend.agents.ux_agent import ux_node
-from backend.agents.orchestrator_agent import orchestrator_node
-from backend.agents.pipeline import spec_pipeline
-from backend.database.db import save_project, save_specification
+from agents.business_agent import business_analyst_node
+from agents.developer_agent import developer_node
+from agents.qa_agent import qa_node
+from agents.security_agent import security_node
+from agents.ux_agent import ux_node
+from agents.orchestrator_agent import orchestrator_node
+from agents.pipeline import spec_pipeline
+from database.db import save_project, save_specification
 
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
+# Rate limiter — keyed by IP address
+# Each unique IP can call /generate-spec-stream max 3 times per hour
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="SpecForge API",
     version="1.0.0"
 )
+
+# Attach rate limiter to app
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +50,17 @@ app.add_middleware(
 )
 
 
+# Custom error response when rate limit is exceeded
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "Rate limit exceeded. You can generate 3 specs per hour. Please try again later."
+        }
+    )
+
+
 class IdeaRequest(BaseModel):
     idea: str
 
@@ -48,10 +71,11 @@ def root():
 
 
 @app.post("/generate-spec")
-async def generate_spec(request: IdeaRequest):
+@limiter.limit("3/hour")
+async def generate_spec(request: Request, body: IdeaRequest):
 
     result = spec_pipeline.invoke({
-        "idea": request.idea,
+        "idea": body.idea,
         "business_analysis": None,
         "dev_concerns": None,
         "qa_concerns": None,
@@ -62,8 +86,8 @@ async def generate_spec(request: IdeaRequest):
 
     project_id = save_project(
         user_id="anonymous",
-        title=request.idea[:80],
-        idea=request.idea
+        title=body.idea[:80],
+        idea=body.idea
     )
 
     save_specification(project_id, result)
@@ -80,12 +104,13 @@ async def generate_spec(request: IdeaRequest):
 
 
 @app.post("/generate-spec-stream")
-async def generate_spec_stream(request: IdeaRequest):
+@limiter.limit("3/hour")
+async def generate_spec_stream(request: Request, body: IdeaRequest):
 
     async def event_generator():
 
         state = {
-            "idea": request.idea,
+            "idea": body.idea,
             "business_analysis": None,
             "dev_concerns": None,
             "qa_concerns": None,
@@ -95,12 +120,12 @@ async def generate_spec_stream(request: IdeaRequest):
         }
 
         agents = [
-            ("business", business_analyst_node, "business_analysis"),
-            ("developer", developer_node, "dev_concerns"),
-            ("qa", qa_node, "qa_concerns"),
-            ("security", security_node, "security_concerns"),
-            ("ux", ux_node, "ux_concerns"),
-            ("orchestrator", orchestrator_node, "final_spec"),
+            ("business",     business_analyst_node, "business_analysis"),
+            ("developer",    developer_node,        "dev_concerns"),
+            ("qa",           qa_node,               "qa_concerns"),
+            ("security",     security_node,         "security_concerns"),
+            ("ux",           ux_node,               "ux_concerns"),
+            ("orchestrator", orchestrator_node,     "final_spec"),
         ]
 
         for agent_name, agent_fn, output_key in agents:
@@ -116,13 +141,13 @@ async def generate_spec_stream(request: IdeaRequest):
         try:
             project_id = save_project(
                 user_id="anonymous",
-                title=request.idea[:80],
-                idea=request.idea
+                title=body.idea[:80],
+                idea=body.idea
             )
             save_specification(project_id, state)
             yield f"data: {json.dumps({'type': 'done', 'project_id': project_id})}\n\n"
 
-        except Exception as e:
+        except Exception:
             yield f"data: {json.dumps({'type': 'done', 'project_id': None})}\n\n"
 
     return StreamingResponse(

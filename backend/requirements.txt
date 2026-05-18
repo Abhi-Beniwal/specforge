@@ -9,3 +9,4 @@ chromadb
 supabase 
 pydantic
 python-multipart
+slowapi

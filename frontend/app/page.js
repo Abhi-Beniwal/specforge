@@ -385,6 +385,8 @@ export default function Home() {
    } catch (err) {
       if (err.name === "AbortError") {
         setError("Request timed out. The backend may be waking up — wait 30 seconds and try again.");
+      } else if (err.message?.includes("429")) {
+        setError("Rate limit reached. You can generate 3 specs per hour. Please try again later.");
       } else {
         setError(err.message || "Connection failed.");
       }
