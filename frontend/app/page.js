@@ -360,7 +360,7 @@ export default function Home() {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 300000); // 5 min
+      const timeout = setTimeout(() => controller.abort(), 480000); // 5 min
 
       const res = await fetch("https://specforge-j74n.onrender.com/generate-spec", {
         method: "POST",
