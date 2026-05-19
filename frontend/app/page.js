@@ -449,9 +449,26 @@ function downloadReport(idea, results) {
     lines.push(`</div>`);
   });
 
+  lines.push(`
+    <div style="text-align:center; margin:40px 0 20px; padding-top:20px; border-top:1px solid #e5e7eb;">
+      <button onclick="window.print()" style="
+        padding:12px 32px;
+        background:#6366f1;
+        color:white;
+        border:none;
+        border-radius:8px;
+        font-size:14px;
+        font-weight:600;
+        cursor:pointer;
+        font-family:Arial,sans-serif;
+      ">⬇ Save as PDF</button>
+      <p style="margin-top:10px;font-size:12px;color:#9ca3af;font-family:Arial,sans-serif;">
+        Click the button above → in the print dialog, set destination to "Save as PDF"
+      </p>
+    </div>
+  `);
   lines.push(`</body></html>`);
 
-  // Use Blob URL — not blocked by popup blockers
   const blob = new Blob([lines.join("\n")], { type:"text/html" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
