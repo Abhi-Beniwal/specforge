@@ -26,7 +26,7 @@ const VERDICT = {
   not_viable:          { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Not Viable" },
   risky:               { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Risky" },
   blocked:             { bg:"#0f0008", b:"#be123c", t:"#fb7185", label:"Blocked" },
-  unclear:             { bg:"#080810", b:"#1e293b", t:"#475569", label:"Unclear" },
+  unclear:             { bg:"#080810", b:"#334155", t:"#64748b", label:"Unclear" },
   feasible:            { bg:"#020f06", b:"#16a34a", t:"#4ade80", label:"Feasible" },
   complex:             { bg:"#0f0800", b:"#d97706", t:"#fbbf24", label:"Complex" },
   partially_feasible:  { bg:"#0f0800", b:"#d97706", t:"#fbbf24", label:"Partially Feasible" },
@@ -55,10 +55,7 @@ const EXAMPLES = [
 ];
 
 const BACKEND = "https://specforge-j74n.onrender.com";
-
-// Agent timing — simulates realistic debate durations while waiting
-// Total ~5.5 minutes to match actual backend time
-const AGENT_DURATIONS = [55, 60, 65, 70, 60, 75]; // seconds per agent
+const AGENT_DURATIONS = [55, 60, 65, 70, 60, 75];
 
 // ─── ScoreRing ────────────────────────────────────────────────────────────────
 
@@ -113,7 +110,7 @@ function ListItems({ items, color }) {
           background:"#060610", borderRadius:7,
           border:"1px solid #0c0c1c", borderLeft:`2px solid ${color}28`,
           fontSize:12, color:"#94a3b8", lineHeight:1.6 }}>
-          <span style={{ color:`${color}50`, flexShrink:0, fontSize:8, marginTop:3 }}>▸</span>
+          <span style={{ color:`${color}60`, flexShrink:0, fontSize:8, marginTop:3 }}>▸</span>
           <span>{item}</span>
         </div>
       ))}
@@ -126,7 +123,7 @@ function ListItems({ items, color }) {
 function AgentOutput({ agent, data }) {
   if (!data) return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center",
-      justifyContent:"center", height:200, gap:8, color:"#1e293b" }}>
+      justifyContent:"center", height:200, gap:8, color:"#334155" }}>
       <span style={{ fontSize:28 }}>◌</span>
       <span style={{ fontSize:12 }}>No output</span>
     </div>
@@ -162,7 +159,7 @@ function AgentOutput({ agent, data }) {
           border:"1px solid #0f0f1c", borderRadius:10 }}>
           <div>
             {verdict && <VerdictBadge verdict={verdict} large />}
-            <div style={{ fontSize:9, color:"#334155", marginTop:6,
+            <div style={{ fontSize:10, color:"#64748b", marginTop:6,
               fontFamily:"'IBM Plex Mono',monospace" }}>
               {agent.label} assessment
             </div>
@@ -172,7 +169,7 @@ function AgentOutput({ agent, data }) {
               {scores.map(([k,v]) => (
                 <div key={k} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
                   <ScoreRing value={v} color={agent.color} size={50} />
-                  <span style={{ fontSize:8, color:"#334155", textAlign:"center",
+                  <span style={{ fontSize:8, color:"#64748b", textAlign:"center",
                     textTransform:"uppercase", letterSpacing:"0.1em",
                     fontFamily:"'IBM Plex Mono',monospace", maxWidth:54, lineHeight:1.3 }}>
                     {k.replace(/_score$/,"").replace(/_/g," ")}
@@ -189,7 +186,7 @@ function AgentOutput({ agent, data }) {
           background:`linear-gradient(135deg,${agent.color}08,transparent)`,
           border:`1px solid ${agent.color}1a`, borderLeft:`3px solid ${agent.color}`,
           borderRadius:8, fontSize:13, color:"#e2e8f0", lineHeight:1.7 }}>
-          <div style={{ fontSize:8, fontWeight:700, color:agent.color, opacity:.7,
+          <div style={{ fontSize:9, fontWeight:700, color:agent.color,
             textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:7,
             fontFamily:"'IBM Plex Mono',monospace" }}>
             {data.product_summary ? "Product Summary" : "Problem Statement"}
@@ -200,9 +197,9 @@ function AgentOutput({ agent, data }) {
 
       {recommendation && (
         <div style={{ padding:"13px 15px", background:"#07070f",
-          border:"1px solid #0f0f1c", borderLeft:"3px solid #1e293b",
-          borderRadius:8, fontSize:12.5, color:"#64748b", lineHeight:1.75 }}>
-          <div style={{ fontSize:8, fontWeight:700, color:"#334155",
+          border:"1px solid #0f0f1c", borderLeft:"3px solid #334155",
+          borderRadius:8, fontSize:12.5, color:"#94a3b8", lineHeight:1.75 }}>
+          <div style={{ fontSize:9, fontWeight:700, color:"#64748b",
             textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:7,
             fontFamily:"'IBM Plex Mono',monospace" }}>Recommendation</div>
           {recommendation}
@@ -211,28 +208,28 @@ function AgentOutput({ agent, data }) {
 
       {textFields.map(([k,v]) => (
         <div key={k}>
-          <div style={{ fontSize:8, fontWeight:700, color:"#334155",
+          <div style={{ fontSize:9, fontWeight:700, color:"#64748b",
             textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:8,
             fontFamily:"'IBM Plex Mono',monospace", paddingBottom:6,
-            borderBottom:"1px solid #0a0a14" }}>
+            borderBottom:"1px solid #0f0f1c" }}>
             {k.replace(/_/g," ")}
           </div>
-          <p style={{ fontSize:12, color:"#64748b", lineHeight:1.7 }}>{v}</p>
+          <p style={{ fontSize:12.5, color:"#94a3b8", lineHeight:1.7 }}>{v}</p>
         </div>
       ))}
 
       {lists.map(([k,v]) => (
         <div key={k}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:9,
-            paddingBottom:7, borderBottom:"1px solid #0a0a14" }}>
-            <span style={{ fontSize:8, fontWeight:700, color:"#334155",
+            paddingBottom:7, borderBottom:"1px solid #0f0f1c" }}>
+            <span style={{ fontSize:9, fontWeight:700, color:"#64748b",
               textTransform:"uppercase", letterSpacing:"0.12em",
               fontFamily:"'IBM Plex Mono',monospace" }}>
               {k.replace(/_/g," ")}
             </span>
             <span style={{ fontSize:9, padding:"1px 7px", borderRadius:999,
               background:`${agent.color}10`, border:`1px solid ${agent.color}22`,
-              color:`${agent.color}80`, fontFamily:"'IBM Plex Mono',monospace" }}>
+              color:`${agent.color}90`, fontFamily:"'IBM Plex Mono',monospace" }}>
               {v.length}
             </span>
           </div>
@@ -242,7 +239,7 @@ function AgentOutput({ agent, data }) {
 
       {meta && (
         <div style={{ display:"flex", gap:16, paddingTop:12,
-          borderTop:"1px solid #0a0a14", flexWrap:"wrap" }}>
+          borderTop:"1px solid #0f0f1c", flexWrap:"wrap" }}>
           {[
             { label:"Latency", val:`${meta.latency_seconds}s` },
             { label:"Input tokens", val:meta.input_tokens?.toLocaleString() },
@@ -250,14 +247,59 @@ function AgentOutput({ agent, data }) {
             { label:"Cost", val:`$${meta.estimated_cost_usd}` },
           ].map(({ label, val }) => val && (
             <div key={label} style={{ display:"flex", flexDirection:"column", gap:2 }}>
-              <span style={{ fontSize:8, color:"#1e293b", textTransform:"uppercase",
+              <span style={{ fontSize:9, color:"#475569", textTransform:"uppercase",
                 letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{label}</span>
-              <span style={{ fontSize:10, color:"#334155",
+              <span style={{ fontSize:11, color:"#64748b",
                 fontFamily:"'IBM Plex Mono',monospace" }}>{val}</span>
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── VerdictSummaryRow ────────────────────────────────────────────────────────
+// Quick overview of all 6 agent verdicts in one scannable row
+
+function VerdictSummaryRow({ results, isMobile }) {
+  const entries = AGENTS.filter(a => results[a.key]);
+  if (entries.length < 6) return null;
+  return (
+    <div style={{ marginBottom:16, padding:"14px 20px",
+      background:"#07070f", border:"1px solid #0f0f1c", borderRadius:12,
+      display:"flex", flexDirection:"column", gap:10 }}>
+      <div style={{ fontSize:9, fontWeight:700, color:"#64748b",
+        textTransform:"uppercase", letterSpacing:"0.14em",
+        fontFamily:"'IBM Plex Mono',monospace" }}>
+        Analysis Summary
+      </div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+        {entries.map(agent => {
+          const result  = results[agent.key];
+          const verdict = result?.verdict || result?.project_viability;
+          const vCfg    = VERDICT[verdict] || VERDICT.unclear;
+          return (
+            <div key={agent.key} style={{ display:"flex", alignItems:"center", gap:6,
+              padding:"5px 10px", borderRadius:8,
+              background:`${agent.color}08`,
+              border:`1px solid ${agent.color}20` }}>
+              <span style={{ width:5, height:5, borderRadius:"50%",
+                background:agent.color, flexShrink:0 }} />
+              <span style={{ fontSize:10, color:"#94a3b8",
+                fontFamily:"'IBM Plex Mono',monospace" }}>
+                {agent.short}
+              </span>
+              <span style={{ fontSize:9, padding:"2px 7px", borderRadius:999,
+                background:vCfg.bg, border:`1px solid ${vCfg.b}`,
+                color:vCfg.t, fontWeight:700, letterSpacing:"0.06em",
+                textTransform:"uppercase" }}>
+                {vCfg.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -278,14 +320,14 @@ function MobileAgentPanel({ results, active, setActive }) {
             <button key={agent.key} onClick={() => setActive(agent.key)}
               style={{ flexShrink:0, padding:"8px 14px",
                 background:isActive?`${agent.color}14`:"#07070f",
-                border:`1px solid ${isActive?agent.color:"#0f0f1c"}`,
+                border:`1px solid ${isActive?agent.color:"#1a1a2e"}`,
                 borderRadius:8, cursor:"pointer",
                 display:"flex", flexDirection:"column", alignItems:"center", gap:4,
                 transition:"all .2s", minWidth:64 }}>
               <div style={{ width:8, height:8, borderRadius:"50%", background:agent.color,
                 boxShadow:isActive?`0 0 8px ${agent.color}`:"none" }} />
               <span style={{ fontSize:10, fontWeight:600,
-                color:isActive?agent.color:"#475569",
+                color:isActive?agent.color:"#94a3b8",
                 fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em" }}>
                 {agent.short}
               </span>
@@ -307,7 +349,7 @@ function MobileAgentPanel({ results, active, setActive }) {
         return (
           <div style={{ background:"#07070f", border:"1px solid #0f0f1c",
             borderRadius:12, overflow:"hidden" }}>
-            <div style={{ padding:"12px 16px", borderBottom:"1px solid #0a0a14",
+            <div style={{ padding:"12px 16px", borderBottom:"1px solid #0f0f1c",
               background:`linear-gradient(135deg,${agent.color}06,transparent 60%)`,
               display:"flex", alignItems:"center", gap:10 }}>
               <div style={{ width:28, height:28, borderRadius:"50%", flexShrink:0,
@@ -319,7 +361,7 @@ function MobileAgentPanel({ results, active, setActive }) {
               <div>
                 <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700,
                   fontSize:13, color:"#f1f5f9" }}>{agent.label}</div>
-                <div style={{ fontSize:9, color:"#334155" }}>{agent.desc}</div>
+                <div style={{ fontSize:10, color:"#64748b" }}>{agent.desc}</div>
               </div>
             </div>
             <div style={{ padding:"16px" }}>
@@ -333,24 +375,19 @@ function MobileAgentPanel({ results, active, setActive }) {
 }
 
 // ─── ProgressBar ─────────────────────────────────────────────────────────────
-// Smooth animated progress bar. Fills based on elapsed time estimate.
 
 function ProgressBar({ progress }) {
   return (
-    <div style={{ height:2, background:"#0a0a14", borderRadius:999, overflow:"hidden" }}>
-      <div style={{
-        height:"100%", borderRadius:999,
+    <div style={{ height:2, background:"#0f0f1c", borderRadius:999, overflow:"hidden" }}>
+      <div style={{ height:"100%", borderRadius:999,
         background:"linear-gradient(90deg,#4338ca,#818cf8,#34d399)",
-        width:`${progress}%`,
-        transition:"width 1s linear",
-        boxShadow:"0 0 8px rgba(99,102,241,0.5)",
-      }} />
+        width:`${progress}%`, transition:"width 1s linear",
+        boxShadow:"0 0 8px rgba(99,102,241,0.5)" }} />
     </div>
   );
 }
 
-// ─── generatePDF ─────────────────────────────────────────────────────────────
-// Generates a text report and triggers browser download
+// ─── downloadReport ───────────────────────────────────────────────────────────
 
 function downloadReport(idea, results) {
   const lines = [];
@@ -364,41 +401,27 @@ function downloadReport(idea, results) {
     const data = results[agent.key];
     if (!data) return;
     lines.push("=".repeat(60));
-    lines.push(`${agent.label.toUpperCase()}`);
+    lines.push(agent.label.toUpperCase());
     lines.push("-".repeat(40));
-
     const verdict = data.verdict || data.project_viability;
     if (verdict) lines.push(`VERDICT: ${(VERDICT[verdict]?.label || verdict).toUpperCase()}`);
-
     const summary = data.product_summary || data.core_problem_statement;
-    if (summary) {
-      lines.push("");
-      lines.push(data.product_summary ? "PRODUCT SUMMARY:" : "PROBLEM STATEMENT:");
-      lines.push(summary);
-    }
-
+    if (summary) { lines.push(""); lines.push(data.product_summary?"PRODUCT SUMMARY:":"PROBLEM STATEMENT:"); lines.push(summary); }
     const rec = data.recommendation || data.final_recommendation;
-    if (rec) {
-      lines.push("");
-      lines.push("RECOMMENDATION:");
-      lines.push(rec);
-    }
-
+    if (rec) { lines.push(""); lines.push("RECOMMENDATION:"); lines.push(rec); }
     Object.entries(data).forEach(([k, v]) => {
       if (Array.isArray(v) && v.length && k !== "_meta") {
-        lines.push("");
-        lines.push(`${k.replace(/_/g," ").toUpperCase()}:`);
+        lines.push(""); lines.push(`${k.replace(/_/g," ").toUpperCase()}:`);
         v.forEach(item => lines.push(`  • ${item}`));
       }
     });
-
     lines.push("");
   });
 
   const blob = new Blob([lines.join("\n")], { type:"text/plain" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
-  a.href     = url;
+  a.href = url;
   a.download = `specforge-${idea.slice(0,30).replace(/\s+/g,"-").toLowerCase()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
@@ -408,29 +431,50 @@ function downloadReport(idea, results) {
 
 export default function Home() {
   const router = useRouter();
-  const [phase, setPhase]         = useState("idle");
-  const [idea, setIdea]           = useState("");
-  const [statuses, setStatuses]   = useState({});
-  const [results, setResults]     = useState({});
-  const [active, setActive]       = useState(null);
-  const [projectId, setProjectId] = useState(null);
-  const [focused, setFocused]     = useState(false);
-  const [error, setError]         = useState(null);
-  const [progress, setProgress]   = useState(0);
-  const [activeAgentIdx, setActiveAgentIdx] = useState(0);
-  const [isMobile, setIsMobile]   = useState(false);
 
-  const textareaRef    = useRef(null);
-  const timersRef      = useRef([]);
-  const controllerRef  = useRef(null);
-  const progressRef    = useRef(null);
-  const startTimeRef   = useRef(null);
+  // Auth state
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser]               = useState(null);
+  const [menuOpen, setMenuOpen]       = useState(false);
+
+  // App state
+  const [phase, setPhase]             = useState("idle");
+  const [idea, setIdea]               = useState("");
+  const [statuses, setStatuses]       = useState({});
+  const [results, setResults]         = useState({});
+  const [active, setActive]           = useState(null);
+  const [projectId, setProjectId]     = useState(null);
+  const [focused, setFocused]         = useState(false);
+  const [error, setError]             = useState(null);
+  const [progress, setProgress]       = useState(0);
+  const [activeAgentIdx, setActiveAgentIdx] = useState(0);
+  const [isMobile, setIsMobile]       = useState(false);
+
+  const textareaRef   = useRef(null);
+  const timersRef     = useRef([]);
+  const controllerRef = useRef(null);
+  const progressRef   = useRef(null);
+  const startTimeRef  = useRef(null);
+  const menuRef       = useRef(null);
 
   // Auth check
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push("/login");
+      if (!session) { router.push("/login"); return; }
+      setUser(session.user);
+      setAuthLoading(false);
     });
+  }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // Detect mobile
@@ -441,19 +485,22 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   const completedCount = Object.values(statuses).filter(s => s === "done").length;
 
-  // Smooth progress bar — runs during request, reaches ~90% then waits
+  // Progress bar animation
   function startProgressBar() {
-    const totalMs = 340000; // ~5.5 min estimate
+    const totalMs = 340000;
     startTimeRef.current = Date.now();
     const tick = () => {
       const elapsed = Date.now() - startTimeRef.current;
       const pct = Math.min(90, (elapsed / totalMs) * 100);
       setProgress(pct);
-      if (pct < 90) {
-        progressRef.current = requestAnimationFrame(tick);
-      }
+      if (pct < 90) progressRef.current = requestAnimationFrame(tick);
     };
     progressRef.current = requestAnimationFrame(tick);
   }
@@ -461,49 +508,40 @@ export default function Home() {
   function stopProgressBar(complete = true) {
     if (progressRef.current) cancelAnimationFrame(progressRef.current);
     if (complete) setProgress(100);
+    else setProgress(0);
   }
 
-  // Sequential agent "thinking" animation while waiting for backend
-  // Each agent pulses for its duration, then shows as "running" → next agent
+  // Sequential agent animation while waiting
   function startAgentAnimation() {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-
-    let cumulativeMs = 3500; // starts after wake-up ping (3s) + small buffer
+    let cumulativeMs = 3500;
     AGENTS.forEach((agent, i) => {
-      const duration = AGENT_DURATIONS[i] * 1000;
-
-      // Show this agent as "running"
-      const t1 = setTimeout(() => {
+      const t = setTimeout(() => {
         setActiveAgentIdx(i);
         setStatuses(prev => ({ ...prev, [agent.key]: "running" }));
       }, cumulativeMs);
-      timersRef.current.push(t1);
-
-      cumulativeMs += duration;
+      timersRef.current.push(t);
+      cumulativeMs += AGENT_DURATIONS[i] * 1000;
     });
   }
 
-  // When real data arrives, animate agents completing one by one
+  // Animate results appearing one by one
   function animateResults(data) {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setStatuses({});
-
     AGENTS.forEach((agent, i) => {
       const agentData = data[KEY_MAP[agent.key]];
       if (!agentData) return;
-
       const t1 = setTimeout(() => {
         setStatuses(prev => ({ ...prev, [agent.key]: "running" }));
       }, i * 500);
-
       const t2 = setTimeout(() => {
         setStatuses(prev => ({ ...prev, [agent.key]: "done" }));
         setResults(prev => ({ ...prev, [agent.key]: agentData }));
         setActive(prev => prev || agent.key);
       }, i * 500 + 350);
-
       timersRef.current.push(t1, t2);
     });
   }
@@ -515,14 +553,12 @@ export default function Home() {
     setPhase("idle");
     setStatuses({});
     setResults({});
-    setProgress(0);
     setActiveAgentIdx(0);
     setError("Analysis cancelled.");
   }, []);
 
   const submit = useCallback(async () => {
     if (!idea.trim() || phase === "running") return;
-
     setPhase("running");
     setStatuses({});
     setResults({});
@@ -531,58 +567,45 @@ export default function Home() {
     setError(null);
     setProgress(0);
     setActiveAgentIdx(0);
-
+    setMenuOpen(false);
     controllerRef.current = new AbortController();
     startProgressBar();
     startAgentAnimation();
 
     try {
-      // Wake up Render backend first
       try {
         await fetch(`${BACKEND}/`, { method:"GET" });
         await new Promise(r => setTimeout(r, 3000));
       } catch { /* ignore */ }
 
       const timeout = setTimeout(() => controllerRef.current?.abort(), 480000);
-
       const res = await fetch(`${BACKEND}/generate-spec`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea }),
-        signal: controllerRef.current.signal,
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ idea }),
+        signal:controllerRef.current.signal,
       });
-
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
-
       const data = await res.json();
-
       stopProgressBar(true);
       animateResults(data);
-
-      const totalDelay = (AGENTS.length - 1) * 500 + 500;
       const t = setTimeout(() => {
         setProjectId(data.project_id);
         setPhase("done");
-      }, totalDelay);
+      }, (AGENTS.length - 1) * 500 + 500);
       timersRef.current.push(t);
 
     } catch (err) {
       stopProgressBar(false);
-      setProgress(0);
-      if (err.name === "AbortError") {
-        // Could be user cancel or timeout — only show error if not already cancelled
-        if (phase !== "idle") {
-          setError("Request timed out. Please try again.");
-          setPhase("idle");
-        }
+      if (err.name === "AbortError" && phase !== "idle") {
+        setError("Request timed out. Please try again.");
       } else if (err.message?.includes("429")) {
         setError("Rate limit reached — 3 specs per hour. Try again later.");
-        setPhase("idle");
-      } else {
-        setError("Connection failed. The backend may be waking up — wait 30s and try again.");
-        setPhase("idle");
+      } else if (err.name !== "AbortError") {
+        setError("Connection failed. Backend may be waking up — wait 30s and try again.");
       }
+      setPhase("idle");
       setStatuses({});
     }
   }, [idea, phase]);
@@ -607,6 +630,43 @@ export default function Home() {
   const isDone    = phase === "done";
   const px        = isMobile ? "16px" : "32px";
   const currentAgent = AGENTS[activeAgentIdx];
+  const userInitial  = user?.email?.[0]?.toUpperCase() || "U";
+  const userEmail    = user?.email || "";
+
+  // Auth loading skeleton
+  if (authLoading) {
+    return (
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Inter:wght@400&display=swap');
+          *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+          body { background:#05050a; font-family:'Inter',sans-serif; }
+          @keyframes shimmerLoad { 0%{background-position:-200% center} 100%{background-position:200% center} }
+          .skel { background:linear-gradient(90deg,#0f0f1c 25%,#161628 50%,#0f0f1c 75%); background-size:200% auto; animation:shimmerLoad 1.5s linear infinite; border-radius:6px; }
+        `}</style>
+        <div style={{ minHeight:"100vh", background:"#05050a" }}>
+          <div style={{ height:54, borderBottom:"1px solid #0a0a14", display:"flex",
+            alignItems:"center", justifyContent:"space-between", padding:"0 32px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800,
+                fontSize:17, letterSpacing:"-0.025em", color:"#f1f5f9" }}>
+                Spec<span style={{ color:"#6366f1" }}>Forge</span>
+              </span>
+            </div>
+            <div className="skel" style={{ width:32, height:32, borderRadius:"50%" }} />
+          </div>
+          <div style={{ maxWidth:800, margin:"80px auto", padding:"0 32px",
+            display:"flex", flexDirection:"column", gap:16 }}>
+            <div className="skel" style={{ height:20, width:"40%" }} />
+            <div className="skel" style={{ height:60, width:"80%" }} />
+            <div className="skel" style={{ height:14, width:"60%" }} />
+            <div className="skel" style={{ height:14, width:"50%" }} />
+            <div className="skel" style={{ height:120, width:"100%", marginTop:16 }} />
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -617,7 +677,7 @@ export default function Home() {
         body { background:#05050a; color:#f1f5f9; font-family:'Inter',sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; }
         ::-webkit-scrollbar { width:3px; height:3px; }
         ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:2px; }
+        ::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
         ::selection { background:rgba(99,102,241,0.3); color:#f1f5f9; }
         @keyframes spin        { to { transform:rotate(360deg); } }
         @keyframes pulseGlow   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.88)} }
@@ -626,36 +686,40 @@ export default function Home() {
         @keyframes slideUp     { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
         @keyframes popIn       { 0%{opacity:0;transform:scale(.85)} 60%{transform:scale(1.05)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes menuDrop    { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
         .shimmer {
           background:linear-gradient(90deg,#6366f1 0%,#818cf8 25%,#c4b5fd 50%,#818cf8 75%,#6366f1 100%);
           background-size:300% auto; -webkit-background-clip:text; background-clip:text;
           -webkit-text-fill-color:transparent; animation:shimmerFlow 5s linear infinite;
         }
         .dot-bg { background-image:radial-gradient(circle,#1e293b 1px,transparent 1px); background-size:28px 28px; }
-        .glass { background:rgba(5,5,10,.9); backdrop-filter:blur(24px) saturate(1.3); -webkit-backdrop-filter:blur(24px) saturate(1.3); }
+        .glass { background:rgba(5,5,10,.92); backdrop-filter:blur(24px) saturate(1.3); -webkit-backdrop-filter:blur(24px) saturate(1.3); }
         .card { background:#07070f; border:1px solid #0f0f1c; border-radius:12px; }
         .agent-btn { border:none; background:transparent; cursor:pointer; width:100%; text-align:left; transition:background .15s; }
-        .agent-btn:hover { background:#09090f; }
+        .agent-btn:hover { background:#0a0a14; }
         .slide-up { animation:slideUp .45s cubic-bezier(.22,1,.36,1) forwards; }
         .fade-in  { animation:fadeIn .35s ease forwards; }
-        .chip { border:1px solid #12122a; background:transparent; cursor:pointer; border-radius:999px; font-family:'Inter',sans-serif; transition:all .15s; }
+        .chip { border:1px solid #1a1a2e; background:transparent; cursor:pointer; border-radius:999px; font-family:'Inter',sans-serif; transition:all .15s; }
         .chip:hover { background:#0d0d20; border-color:#6366f130; color:#818cf8 !important; }
         .qt-btn { border:1px solid #0f0f1c; background:#07070f; cursor:pointer; font-family:'IBM Plex Mono',monospace; border-radius:6px; transition:all .15s; }
         .qt-btn:hover { background:#0d0d1a; }
         .agent-tabs::-webkit-scrollbar { display:none; }
-        .cancel-btn:hover { background:#1a0505 !important; border-color:#7f1d1d !important; }
-        .dl-btn:hover { background:#0a1628 !important; border-color:#3b82f6 !important; }
+        .avatar-btn { background:none; border:none; cursor:pointer; padding:0; }
+        .avatar-btn:hover .avatar-ring { border-color:#6366f1 !important; box-shadow: 0 0 14px rgba(99,102,241,0.4) !important; }
+        .menu-item { width:100%; background:none; border:none; padding:10px 16px; text-align:left; cursor:pointer; color:#94a3b8; font-size:13px; font-family:'Inter',sans-serif; transition:background .15s; display:flex; align-items:center; gap:10px; }
+        .menu-item:hover { background:#0a0a14; color:#e2e8f0; }
+        .menu-item.danger:hover { background:#0f0008; color:#f87171; }
       `}</style>
 
-      <div className="dot-bg" style={{ position:"fixed", inset:0, zIndex:0, opacity:.35, pointerEvents:"none" }} />
+      <div className="dot-bg" style={{ position:"fixed", inset:0, zIndex:0, opacity:.3, pointerEvents:"none" }} />
 
       {!isMobile && (
         <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
           <div style={{ position:"absolute", top:-200, left:"28%", width:640, height:640,
-            background:"radial-gradient(ellipse,rgba(99,102,241,.07) 0%,transparent 70%)",
+            background:"radial-gradient(ellipse,rgba(99,102,241,.06) 0%,transparent 70%)",
             animation:"ambientDrift 9s ease infinite" }} />
           <div style={{ position:"absolute", top:"45%", right:-80, width:420, height:420,
-            background:"radial-gradient(ellipse,rgba(167,139,250,.05) 0%,transparent 70%)",
+            background:"radial-gradient(ellipse,rgba(167,139,250,.04) 0%,transparent 70%)",
             animation:"ambientDrift 12s ease infinite 3s" }} />
         </div>
       )}
@@ -665,11 +729,13 @@ export default function Home() {
         {/* ── Navbar ── */}
         <nav className="glass" style={{
           position:"sticky", top:0, zIndex:200,
-          borderBottom:"1px solid #0a0a14",
+          borderBottom:"1px solid #0f0f1c",
           display:"flex", flexDirection:"column",
         }}>
           <div style={{ height:54, display:"flex", alignItems:"center",
             justifyContent:"space-between", padding:`0 ${px}` }}>
+
+            {/* Left: Logo */}
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800,
                 fontSize:isMobile?15:17, letterSpacing:"-0.025em" }}>
@@ -681,19 +747,19 @@ export default function Home() {
                 fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>BETA</span>
             </div>
 
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              {/* Running state: show current agent name */}
+            {/* Center: Status (visible on all sizes) */}
+            <div style={{ flex:1, display:"flex", justifyContent:"center", padding:"0 12px" }}>
               {isRunning && (
                 <div style={{ display:"flex", alignItems:"center", gap:6,
-                  padding:"4px 10px", background:"#0d0a28",
+                  padding:"4px 12px", background:"#0d0a28",
                   border:`1px solid ${currentAgent.color}30`, borderRadius:999 }}>
                   <span style={{ width:5, height:5, borderRadius:"50%",
                     background:currentAgent.color,
                     animation:"pulseGlow 1.5s ease infinite",
                     boxShadow:`0 0 8px ${currentAgent.color}`, display:"inline-block" }} />
-                  <span style={{ fontSize:9, color:currentAgent.color,
+                  <span style={{ fontSize:10, color:currentAgent.color,
                     fontFamily:"'IBM Plex Mono',monospace",
-                    maxWidth:isMobile?100:180, overflow:"hidden",
+                    maxWidth:isMobile?120:220, overflow:"hidden",
                     textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                     {currentAgent.label} analysing
                   </span>
@@ -701,30 +767,82 @@ export default function Home() {
               )}
               {isDone && (
                 <div style={{ display:"flex", alignItems:"center", gap:6,
-                  padding:"4px 10px", background:"#020d07",
+                  padding:"4px 12px", background:"#020d07",
                   border:"1px solid #16a34a40", borderRadius:999 }}>
                   <span style={{ width:5, height:5, borderRadius:"50%", background:"#34d399",
                     boxShadow:"0 0 8px #34d399", display:"inline-block" }} />
-                  <span style={{ fontSize:9, color:"#34d399",
+                  <span style={{ fontSize:10, color:"#34d399",
                     fontFamily:"'IBM Plex Mono',monospace" }}>
                     {completedCount}/6 complete
                   </span>
                 </div>
               )}
-              {!isMobile && !isRunning && !isDone && (
-                <span style={{ fontSize:11, color:"#1e293b",
+              {isIdle && !isMobile && (
+                <span style={{ fontSize:11, color:"#475569",
                   fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em" }}>
                   Multi-Agent SRS Generator
                 </span>
               )}
             </div>
+
+            {/* Right: User avatar + dropdown */}
+            <div ref={menuRef} style={{ position:"relative" }}>
+              <button className="avatar-btn" onClick={() => setMenuOpen(o => !o)}>
+                <div className="avatar-ring" style={{ width:32, height:32, borderRadius:"50%",
+                  background:"linear-gradient(135deg,#4338ca,#6d28d9)",
+                  border:`2px solid ${menuOpen?"#6366f1":"#1e1b4b"}`,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  transition:"all .2s",
+                  boxShadow:menuOpen?"0 0 14px rgba(99,102,241,0.4)":"none" }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:"#fff",
+                    fontFamily:"'Inter',sans-serif" }}>
+                    {userInitial}
+                  </span>
+                </div>
+              </button>
+
+              {/* Dropdown menu */}
+              {menuOpen && (
+                <div style={{ position:"absolute", right:0, top:"calc(100% + 8px)",
+                  width:220, background:"#07070f",
+                  border:"1px solid #0f0f1c", borderRadius:10,
+                  overflow:"hidden", zIndex:300,
+                  boxShadow:"0 20px 40px rgba(0,0,0,0.6)",
+                  animation:"menuDrop .2s cubic-bezier(.22,1,.36,1) forwards" }}>
+
+                  {/* User info */}
+                  <div style={{ padding:"12px 16px", borderBottom:"1px solid #0f0f1c" }}>
+                    <div style={{ fontSize:10, color:"#475569",
+                      fontFamily:"'IBM Plex Mono',monospace",
+                      textTransform:"uppercase", letterSpacing:"0.08em",
+                      marginBottom:4 }}>Signed in as</div>
+                    <div style={{ fontSize:12, color:"#94a3b8",
+                      wordBreak:"break-all", lineHeight:1.4 }}>
+                      {userEmail}
+                    </div>
+                  </div>
+
+                  {/* Menu items */}
+                  <button className="menu-item" onClick={() => setMenuOpen(false)}>
+                    <span style={{ fontSize:14 }}>⚡</span>
+                    <span>New Analysis</span>
+                  </button>
+
+                  <div style={{ height:1, background:"#0f0f1c" }} />
+
+                  <button className="menu-item danger" onClick={handleLogout}>
+                    <span style={{ fontSize:14 }}>→</span>
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Progress bar — only visible when running */}
+          {/* Progress bar */}
           {isRunning && (
-            <div style={{ padding:`0 ${px} 0` }}>
+            <div style={{ padding:`0 ${px} 6px` }}>
               <ProgressBar progress={progress} />
-              <div style={{ height:6 }} />
             </div>
           )}
         </nav>
@@ -737,6 +855,7 @@ export default function Home() {
             transition:"max-height .6s cubic-bezier(.22,1,.36,1), opacity .4s ease",
           }}>
             <div style={{ paddingTop:isMobile?40:76, paddingBottom:36 }} className="slide-up">
+
               <div style={{ display:"inline-flex", alignItems:"center", gap:8,
                 padding:"6px 14px", background:"linear-gradient(135deg,#07051a,#0a0820)",
                 border:"1px solid #2d1f6e50", borderRadius:999, marginBottom:24,
@@ -760,14 +879,14 @@ export default function Home() {
                 <span className="shimmer">from every angle</span>
               </h1>
 
-              <p style={{ fontSize:isMobile?13:15, color:"#475569",
+              <p style={{ fontSize:isMobile?13:15, color:"#64748b",
                 maxWidth:520, lineHeight:1.7, marginBottom:24 }}>
                 Five AI specialists debate your product idea and synthesize a complete
                 Software Requirements Specification — with MVP scope, security analysis,
                 and implementation priorities.
               </p>
 
-              <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
                 {AGENTS.slice(0,5).map(a => (
                   <span key={a.key} style={{ display:"inline-flex", alignItems:"center",
                     gap:5, fontSize:isMobile?9:10, padding:"4px 10px", borderRadius:999,
@@ -781,12 +900,12 @@ export default function Home() {
               </div>
 
               <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                <span style={{ fontSize:10, color:"#1e293b",
+                <span style={{ fontSize:10, color:"#475569",
                   fontFamily:"'IBM Plex Mono',monospace" }}>TRY →</span>
                 {EXAMPLES.map((e,i) => (
                   <button key={i} className="chip"
                     onClick={() => { setIdea(e); textareaRef.current?.focus(); }}
-                    style={{ fontSize:isMobile?9:10, padding:"4px 10px", color:"#334155" }}>
+                    style={{ fontSize:isMobile?9:10, padding:"4px 10px", color:"#64748b" }}>
                     {e}
                   </button>
                 ))}
@@ -799,7 +918,7 @@ export default function Home() {
             <div style={{ borderRadius:14, padding:1,
               background:focused?"linear-gradient(135deg,#4338ca,#7c3aed,#4338ca)":"#0f0f1c",
               transition:"background .3s, box-shadow .3s",
-              boxShadow:focused?"0 0 32px rgba(99,102,241,.18)":"none" }}>
+              boxShadow:focused?"0 0 32px rgba(99,102,241,.15)":"none" }}>
               <div style={{ borderRadius:13, background:"#08081a", overflow:"hidden" }}>
                 <textarea
                   ref={textareaRef}
@@ -807,29 +926,43 @@ export default function Home() {
                   onChange={e => setIdea(e.target.value)}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  onKeyDown={e => { if (e.key==="Enter" && (e.metaKey||e.ctrlKey)) submit(); }}
-                  placeholder={isIdle?"Describe your product idea...":"Analyse another idea..."}
+                  onKeyDown={e => { if (e.key==="Enter" && (e.metaKey||e.ctrlKey) && isIdle) submit(); }}
+                  placeholder="Describe your product idea..."
+                  readOnly={isRunning}
                   rows={isIdle?(isMobile?3:4):2}
                   style={{ width:"100%", background:"transparent", border:"none", outline:"none",
                     resize:"none", fontFamily:"'Inter',sans-serif",
-                    fontSize:isMobile?15:14, lineHeight:1.7, color:"#e2e8f0", caretColor:"#6366f1",
+                    fontSize:isMobile?15:14, lineHeight:1.7,
+                    color: isRunning ? "#475569" : "#e2e8f0",
+                    caretColor:"#6366f1",
                     padding:isIdle?(isMobile?"16px 16px 50px 16px":"18px 18px 56px 18px"):"14px 16px",
-                    transition:"padding .45s ease", WebkitAppearance:"none" }}
+                    transition:"padding .45s ease, color .3s",
+                    WebkitAppearance:"none", cursor:isRunning?"default":"text" }}
                 />
+
                 {isIdle && (
-                  <div style={{ padding:"8px 16px", borderTop:"1px solid #0d0d1a",
+                  <div style={{ padding:"8px 16px", borderTop:"1px solid #0f0f1c",
                     display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                    {!isMobile ? (
-                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                        {["⌘","↵"].map((k,i) => (
-                          <kbd key={i} style={{ fontSize:10, padding:"2px 7px", background:"#07070f",
-                            border:"1px solid #0f0f1c", borderRadius:4, color:"#1e293b",
-                            fontFamily:"'IBM Plex Mono',monospace" }}>{k}</kbd>
-                        ))}
-                        <span style={{ fontSize:10, color:"#1e293b" }}>to submit</span>
-                      </div>
-                    ) : <span />}
-                    <span style={{ fontSize:10, color:"#1e293b",
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      {!isMobile && (
+                        <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                          {["⌘","↵"].map((k,i) => (
+                            <kbd key={i} style={{ fontSize:10, padding:"2px 7px", background:"#0f0f1c",
+                              border:"1px solid #1a1a2e", borderRadius:4, color:"#475569",
+                              fontFamily:"'IBM Plex Mono',monospace" }}>{k}</kbd>
+                          ))}
+                          <span style={{ fontSize:11, color:"#475569" }}>to submit</span>
+                        </div>
+                      )}
+                      {/* Idea length hint */}
+                      {idea.length > 0 && idea.length < 30 && (
+                        <span style={{ fontSize:10, color:"#d97706",
+                          fontFamily:"'IBM Plex Mono',monospace" }}>
+                          ↑ more detail = better results
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize:10, color:"#475569",
                       fontFamily:"'IBM Plex Mono',monospace" }}>
                       {idea.length > 0 ? `${idea.length} chars` : ""}
                     </span>
@@ -840,39 +973,19 @@ export default function Home() {
 
             {/* Buttons row */}
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end", marginTop:8 }}>
-
-              {/* Cancel button — only when running */}
               {isRunning && (
-                <button onClick={cancel} className="cancel-btn"
-                  style={{ padding:isMobile?"12px 20px":"9px 18px",
+                <button onClick={cancel}
+                  style={{ padding:isMobile?"12px 20px":"9px 16px",
                     background:"#0f0008", border:"1px solid #7f1d1d",
                     borderRadius:9, color:"#f87171",
                     fontSize:isMobile?13:12, fontWeight:600,
                     cursor:"pointer", transition:"all .2s",
                     display:"inline-flex", alignItems:"center", gap:6,
                     fontFamily:"'Inter',sans-serif",
-                    flex:isMobile?"1":"none" }}>
+                    flex:isMobile?"1":"none" }}
+                  onMouseEnter={e => { e.currentTarget.style.background="#1a0505"; e.currentTarget.style.borderColor="#be123c"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background="#0f0008"; e.currentTarget.style.borderColor="#7f1d1d"; }}>
                   <span style={{ fontSize:10 }}>✕</span> Stop
-                </button>
-              )}
-
-              {/* Generate / Analysing button */}
-              {!isRunning && (
-                <button onClick={submit}
-                  disabled={!idea.trim()}
-                  style={{ padding:isMobile?"12px 24px":"9px 22px",
-                    background: "linear-gradient(135deg,#4338ca,#6d28d9)",
-                    border:"1px solid #5b4dcc", borderRadius:9, color:"#fff",
-                    fontSize:isMobile?14:12, fontWeight:600,
-                    opacity:!idea.trim()?.45:1,
-                    cursor:!idea.trim()?"not-allowed":"pointer",
-                    transition:"all .2s",
-                    display:"inline-flex", alignItems:"center", gap:8,
-                    boxShadow:"0 0 22px rgba(99,102,241,.28)",
-                    fontFamily:"'Inter',sans-serif",
-                    width:isMobile?"100%":"auto",
-                    justifyContent:isMobile?"center":"flex-start" }}>
-                  Generate Spec →
                 </button>
               )}
 
@@ -880,13 +993,31 @@ export default function Home() {
                 <div style={{ display:"flex", alignItems:"center", gap:8,
                   padding:"9px 18px", background:"#0d0a28",
                   border:"1px solid #1e1b4b", borderRadius:9,
-                  fontSize:12, color:"#4338ca",
-                  fontFamily:"'Inter',sans-serif" }}>
+                  fontSize:12, color:"#4338ca", fontFamily:"'Inter',sans-serif" }}>
                   <span style={{ width:11, height:11, borderRadius:"50%",
                     border:"2px solid #1e1b4b", borderTopColor:"#818cf8",
                     animation:"spin .7s linear infinite", display:"inline-block" }} />
                   Analysing
                 </div>
+              )}
+
+              {!isRunning && (
+                <button onClick={submit} disabled={!idea.trim() || isDone}
+                  style={{ padding:isMobile?"12px 24px":"9px 22px",
+                    background: (!idea.trim()||isDone) ? "#0a0a14" : "linear-gradient(135deg,#4338ca,#6d28d9)",
+                    border:"1px solid",
+                    borderColor: (!idea.trim()||isDone) ? "#1a1a2e" : "#5b4dcc",
+                    borderRadius:9,
+                    color: (!idea.trim()||isDone) ? "#334155" : "#fff",
+                    fontSize:isMobile?14:12, fontWeight:600,
+                    cursor:(!idea.trim()||isDone)?"not-allowed":"pointer",
+                    transition:"all .2s", display:"inline-flex", alignItems:"center", gap:8,
+                    boxShadow:(!idea.trim()||isDone)?"none":"0 0 22px rgba(99,102,241,.28)",
+                    fontFamily:"'Inter',sans-serif",
+                    width:isMobile?"100%":"auto",
+                    justifyContent:isMobile?"center":"flex-start" }}>
+                  {isDone ? "New Analysis →" : "Generate Spec →"}
+                </button>
               )}
             </div>
           </div>
@@ -912,11 +1043,11 @@ export default function Home() {
           }}>
             <div className="card" style={{ padding:isMobile?"14px 16px":"18px 24px" }}>
               <div style={{ display:"flex", alignItems:"center", marginBottom:12 }}>
-                <span style={{ fontSize:8, fontWeight:700, color:"#1e293b",
+                <span style={{ fontSize:9, fontWeight:700, color:"#475569",
                   textTransform:"uppercase", letterSpacing:"0.14em",
                   fontFamily:"'IBM Plex Mono',monospace" }}>Agent Pipeline</span>
-                <div style={{ flex:1, height:1, background:"#0a0a14", margin:"0 10px" }} />
-                <span style={{ fontSize:9, color:"#1e293b",
+                <div style={{ flex:1, height:1, background:"#0f0f1c", margin:"0 10px" }} />
+                <span style={{ fontSize:10, color:"#475569",
                   fontFamily:"'IBM Plex Mono',monospace" }}>{completedCount}/6</span>
               </div>
               <div style={{ display:"flex", alignItems:"center" }}>
@@ -940,7 +1071,7 @@ export default function Home() {
                           <div style={{ width:nodeSize, height:nodeSize, borderRadius:"50%",
                             display:"flex", alignItems:"center", justifyContent:"center",
                             background:isDn?`${agent.color}14`:isRun?"#100c00":"#07070f",
-                            border:`2px solid ${isDn?agent.color:isRun?"#f59e0b":"#0f0f1c"}`,
+                            border:`2px solid ${isDn?agent.color:isRun?"#f59e0b":"#1a1a2e"}`,
                             transition:"all .4s cubic-bezier(.22,1,.36,1)",
                             boxShadow:isDn?`0 0 14px ${agent.glow}`:isRun?"0 0 10px rgba(245,158,11,.28)":"none",
                             ...(isDn?{animation:"popIn .4s cubic-bezier(.22,1,.36,1)"}:{}) }}>
@@ -950,24 +1081,24 @@ export default function Home() {
                               ? <span style={{ width:6, height:6, borderRadius:"50%",
                                   background:"#f59e0b", display:"block",
                                   animation:"pulseGlow 1s ease infinite" }} />
-                              : <span style={{ color:"#1e293b", fontSize:9, fontWeight:600,
+                              : <span style={{ color:"#475569", fontSize:9, fontWeight:600,
                                   fontFamily:"'IBM Plex Mono',monospace" }}>{i+1}</span>
                             }
                           </div>
                         </div>
                         <span style={{ fontSize:isMobile?7:8, fontWeight:600,
                           fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em",
-                          color:isDn?agent.color:isRun?"#f59e0b":"#1e293b",
+                          color:isDn?agent.color:isRun?"#f59e0b":"#475569",
                           transition:"color .3s", whiteSpace:"nowrap" }}>
                           {agent.short}
                         </span>
                       </button>
                       {i < AGENTS.length-1 && (
-                        <div style={{ flex:"0 0 10px", height:1, background:"#0a0a14",
+                        <div style={{ flex:"0 0 10px", height:1, background:"#0f0f1c",
                           position:"relative", overflow:"hidden" }}>
                           <div style={{ position:"absolute", inset:0,
                             background:isDn?agent.color:"transparent",
-                            opacity:.3, transition:"background .5s ease" }} />
+                            opacity:.4, transition:"background .5s ease" }} />
                         </div>
                       )}
                     </div>
@@ -976,6 +1107,11 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* ── Verdict Summary Row ── */}
+          {isDone && Object.keys(results).length === 6 && (
+            <VerdictSummaryRow results={results} isMobile={isMobile} />
+          )}
 
           {/* ── Results ── */}
           {Object.keys(results).length > 0 && (
@@ -987,12 +1123,12 @@ export default function Home() {
                   {/* Sidebar */}
                   <div className="card" style={{ overflow:"hidden",
                     position:"sticky", top:66, height:"fit-content" }}>
-                    <div style={{ padding:"11px 15px", borderBottom:"1px solid #0a0a14",
+                    <div style={{ padding:"11px 15px", borderBottom:"1px solid #0f0f1c",
                       display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                      <span style={{ fontSize:8, fontWeight:700, color:"#1e293b",
+                      <span style={{ fontSize:9, fontWeight:700, color:"#475569",
                         textTransform:"uppercase", letterSpacing:"0.14em",
                         fontFamily:"'IBM Plex Mono',monospace" }}>Agents</span>
-                      <span style={{ fontSize:9, color:"#1e293b",
+                      <span style={{ fontSize:10, color:"#475569",
                         fontFamily:"'IBM Plex Mono',monospace" }}>
                         {Object.keys(results).length}/{AGENTS.length}
                       </span>
@@ -1014,8 +1150,8 @@ export default function Home() {
                               background:agent.color, flexShrink:0,
                               boxShadow:isActive?`0 0 8px ${agent.color}`:"none",
                               transition:"box-shadow .2s" }} />
-                            <span style={{ fontSize:11, fontWeight:500,
-                              color:isActive?"#e2e8f0":"#475569",
+                            <span style={{ fontSize:12, fontWeight:500,
+                              color:isActive?"#e2e8f0":"#64748b",
                               transition:"color .15s", lineHeight:1.2 }}>
                               {agent.label}
                             </span>
@@ -1045,7 +1181,7 @@ export default function Home() {
                       if (!agent) return null;
                       return (
                         <>
-                          <div style={{ padding:"15px 24px", borderBottom:"1px solid #0a0a14",
+                          <div style={{ padding:"15px 24px", borderBottom:"1px solid #0f0f1c",
                             background:`linear-gradient(135deg,${agent.color}06,transparent 60%)`,
                             display:"flex", alignItems:"center", gap:12 }}>
                             <div style={{ width:34, height:34, borderRadius:"50%", flexShrink:0,
@@ -1061,7 +1197,7 @@ export default function Home() {
                                 fontSize:14, color:"#f1f5f9", letterSpacing:"-0.015em" }}>
                                 {agent.label}
                               </div>
-                              <div style={{ fontSize:10, color:"#334155", marginTop:2 }}>
+                              <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>
                                 {agent.desc}
                               </div>
                             </div>
@@ -1069,9 +1205,9 @@ export default function Home() {
                               {AGENTS.filter(a => results[a.key] && a.key !== active).map(a => (
                                 <button key={a.key} className="qt-btn"
                                   onClick={() => setActive(a.key)}
-                                  style={{ fontSize:8, padding:"4px 9px", color:"#334155", letterSpacing:"0.06em" }}
+                                  style={{ fontSize:9, padding:"4px 9px", color:"#64748b", letterSpacing:"0.06em" }}
                                   onMouseEnter={e => { e.currentTarget.style.background=`${a.color}10`; e.currentTarget.style.borderColor=`${a.color}30`; e.currentTarget.style.color=a.color; }}
-                                  onMouseLeave={e => { e.currentTarget.style.background="#07070f"; e.currentTarget.style.borderColor="#0f0f1c"; e.currentTarget.style.color="#334155"; }}>
+                                  onMouseLeave={e => { e.currentTarget.style.background="#07070f"; e.currentTarget.style.borderColor="#0f0f1c"; e.currentTarget.style.color="#64748b"; }}>
                                   {a.short}
                                 </button>
                               ))}
@@ -1101,7 +1237,7 @@ export default function Home() {
               display:"flex", alignItems:"center",
               flexDirection:isMobile?"column":"row",
               gap:12, justifyContent:"space-between",
-              boxShadow:"0 0 32px rgba(52,211,153,.04)" }}>
+              boxShadow:"0 0 32px rgba(52,211,153,.06)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                 <div style={{ width:32, height:32, borderRadius:"50%", background:"#052e16",
                   border:"1px solid #16a34a40", display:"flex", alignItems:"center",
@@ -1114,9 +1250,9 @@ export default function Home() {
                     Specification generated &amp; saved
                   </p>
                   {projectId && (
-                    <p style={{ fontSize:9, color:"#166534", marginTop:3,
+                    <p style={{ fontSize:9, color:"#4ade8060", marginTop:3,
                       fontFamily:"'IBM Plex Mono',monospace", wordBreak:"break-all" }}>
-                      PROJECT_ID: {projectId}
+                      ID: {projectId}
                     </p>
                   )}
                 </div>
@@ -1124,17 +1260,14 @@ export default function Home() {
 
               <div style={{ display:"flex", gap:8, width:isMobile?"100%":"auto",
                 flexDirection:isMobile?"column":"row" }}>
-
-                {/* Download report button */}
                 <button onClick={() => downloadReport(idea, results)}
-                  className="dl-btn"
                   style={{ fontSize:11, padding:"8px 16px", background:"#04081a",
                     border:"1px solid #1e3a5f", color:"#60a5fa", borderRadius:7,
                     cursor:"pointer", fontFamily:"'Inter',sans-serif",
-                    transition:"all .15s", display:"inline-flex",
-                    alignItems:"center", gap:6,
-                    width:isMobile?"100%":"auto",
-                    justifyContent:isMobile?"center":"flex-start" }}>
+                    transition:"all .15s", display:"inline-flex", alignItems:"center", gap:6,
+                    width:isMobile?"100%":"auto", justifyContent:isMobile?"center":"flex-start" }}
+                  onMouseEnter={e => { e.currentTarget.style.background="#0a1628"; e.currentTarget.style.borderColor="#3b82f6"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background="#04081a"; e.currentTarget.style.borderColor="#1e3a5f"; }}>
                   ↓ Download Report
                 </button>
 
@@ -1142,10 +1275,8 @@ export default function Home() {
                   style={{ fontSize:11, padding:"8px 20px", background:"transparent",
                     border:"1px solid #16a34a30", color:"#4ade80", borderRadius:7,
                     cursor:"pointer", fontFamily:"'Inter',sans-serif",
-                    width:isMobile?"100%":"auto",
-                    justifyContent:isMobile?"center":"flex-start",
-                    display:"inline-flex", alignItems:"center",
-                    transition:"all .15s" }}
+                    width:isMobile?"100%":"auto", justifyContent:isMobile?"center":"flex-start",
+                    display:"inline-flex", alignItems:"center", transition:"all .15s" }}
                   onMouseEnter={e => { e.currentTarget.style.background="#052e16"; e.currentTarget.style.borderColor="#16a34a60"; }}
                   onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor="#16a34a30"; }}>
                   New Analysis →
@@ -1159,8 +1290,7 @@ export default function Home() {
             maxHeight:isIdle?600:0, opacity:isIdle?1:0,
             overflow:"hidden", transition:"max-height .6s ease, opacity .4s ease",
           }}>
-            <div style={{
-              display:"grid",
+            <div style={{ display:"grid",
               gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)",
               gap:12, paddingTop:4 }}>
               {[
@@ -1189,10 +1319,10 @@ export default function Home() {
                     </div>
                   </div>
                   <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700,
-                    fontSize:13, color:"#94a3b8", marginBottom:8 }}>
+                    fontSize:13.5, color:"#e2e8f0", marginBottom:8 }}>
                     {card.title}
                   </div>
-                  <div style={{ fontSize:12, color:"#334155", lineHeight:1.65 }}>
+                  <div style={{ fontSize:12.5, color:"#64748b", lineHeight:1.65 }}>
                     {card.desc}
                   </div>
                 </div>
