@@ -470,13 +470,12 @@ function downloadReport(idea, results) {
   lines.push(`</body></html>`);
 
   const blob = new Blob([lines.join("\n")], { type:"text/html" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.target   = "_blank";
-  a.rel      = "noopener";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+const url  = URL.createObjectURL(blob);
+const a    = document.createElement("a");
+a.href     = url;
+a.download = `specforge-report.html`;
+a.click();
+setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
