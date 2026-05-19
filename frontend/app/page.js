@@ -391,40 +391,75 @@ function ProgressBar({ progress }) {
 
 function downloadReport(idea, results) {
   const lines = [];
-  lines.push("SPECFORGE — SOFTWARE REQUIREMENTS SPECIFICATION");
-  lines.push("=".repeat(60));
-  lines.push(`IDEA: ${idea}`);
-  lines.push(`GENERATED: ${new Date().toLocaleString()}`);
-  lines.push("");
+
+  lines.push(`<html><head><meta charset="UTF-8"><style>
+    body { font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; color: #1a1a1a; line-height: 1.6; }
+    h1 { font-size: 22px; border-bottom: 2px solid #6366f1; padding-bottom: 10px; color: #111; }
+    h2 { font-size: 16px; margin-top: 32px; margin-bottom: 4px; color: #1e1b4b; border-left: 4px solid #6366f1; padding-left: 10px; }
+    h3 { font-size: 13px; margin-top: 20px; margin-bottom: 6px; color: #374151; text-transform: uppercase; letter-spacing: 0.08em; }
+    p { font-size: 13px; color: #374151; margin-bottom: 10px; }
+    ul { margin: 0 0 12px 0; padding-left: 20px; }
+    li { font-size: 13px; color: #374151; margin-bottom: 4px; }
+    .meta { font-size: 12px; color: #6b7280; margin-bottom: 32px; }
+    .verdict { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: bold; margin-bottom: 8px; }
+    .agent-block { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .summary-box { background: #eff6ff; border-left: 4px solid #6366f1; padding: 12px 16px; border-radius: 4px; margin-bottom: 12px; font-size: 13px; }
+    .rec-box { background: #f9fafb; border-left: 4px solid #9ca3af; padding: 12px 16px; border-radius: 4px; margin-bottom: 12px; font-size: 13px; color: #4b5563; }
+  </style></head><body>`);
+
+  lines.push(`<h1>SpecForge — Software Requirements Specification</h1>`);
+  lines.push(`<p class="meta"><strong>Idea:</strong> ${idea}<br><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
 
   AGENTS.forEach(agent => {
     const data = results[agent.key];
     if (!data) return;
-    lines.push("=".repeat(60));
-    lines.push(agent.label.toUpperCase());
-    lines.push("-".repeat(40));
+
     const verdict = data.verdict || data.project_viability;
-    if (verdict) lines.push(`VERDICT: ${(VERDICT[verdict]?.label || verdict).toUpperCase()}`);
+    const vCfg = VERDICT[verdict];
     const summary = data.product_summary || data.core_problem_statement;
-    if (summary) { lines.push(""); lines.push(data.product_summary?"PRODUCT SUMMARY:":"PROBLEM STATEMENT:"); lines.push(summary); }
     const rec = data.recommendation || data.final_recommendation;
-    if (rec) { lines.push(""); lines.push("RECOMMENDATION:"); lines.push(rec); }
+
+    lines.push(`<div class="agent-block">`);
+    lines.push(`<h2>${agent.label}</h2>`);
+
+    if (verdict && vCfg) {
+      lines.push(`<div class="verdict" style="background:${vCfg.bg};border:1px solid ${vCfg.b};color:${vCfg.t}">● ${vCfg.label}</div>`);
+    }
+
+    if (summary) {
+      lines.push(`<div class="summary-box"><strong>${data.product_summary ? "Product Summary" : "Problem Statement"}:</strong><br>${summary}</div>`);
+    }
+
+    if (rec) {
+      lines.push(`<div class="rec-box"><strong>Recommendation:</strong><br>${rec}</div>`);
+    }
+
     Object.entries(data).forEach(([k, v]) => {
+      if (typeof v === "string" && !["role","verdict","project_viability","recommendation",
+        "final_recommendation","product_summary","core_problem_statement"].includes(k)) {
+        lines.push(`<h3>${k.replace(/_/g," ")}</h3><p>${v}</p>`);
+      }
       if (Array.isArray(v) && v.length && k !== "_meta") {
-        lines.push(""); lines.push(`${k.replace(/_/g," ").toUpperCase()}:`);
-        v.forEach(item => lines.push(`  • ${item}`));
+        lines.push(`<h3>${k.replace(/_/g," ")} (${v.length})</h3><ul>`);
+        v.forEach(item => lines.push(`<li>${item}</li>`));
+        lines.push(`</ul>`);
       }
     });
-    lines.push("");
+
+    lines.push(`</div>`);
   });
 
-  const blob = new Blob([lines.join("\n")], { type:"text/plain" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url;
-  a.download = `specforge-${idea.slice(0,30).replace(/\s+/g,"-").toLowerCase()}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+  lines.push(`</body></html>`);
+
+  // Open in new tab — user prints to PDF using Ctrl+P → Save as PDF
+  const win = window.open("", "_blank");
+  win.document.write(lines.join("\n"));
+  win.document.close();
+
+  // Auto-trigger print dialog after a short delay
+  setTimeout(() => {
+    win.print();
+  }, 500);
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
