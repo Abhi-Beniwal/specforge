@@ -451,15 +451,15 @@ function downloadReport(idea, results) {
 
   lines.push(`</body></html>`);
 
-  // Open in new tab — user prints to PDF using Ctrl+P → Save as PDF
-  const win = window.open("", "_blank");
-  win.document.write(lines.join("\n"));
-  win.document.close();
-
-  // Auto-trigger print dialog after a short delay
-  setTimeout(() => {
-    win.print();
-  }, 500);
+  // Use Blob URL — not blocked by popup blockers
+  const blob = new Blob([lines.join("\n")], { type:"text/html" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.target   = "_blank";
+  a.rel      = "noopener";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
