@@ -8,10 +8,6 @@ from typing import (
 )
 
 
-# =========================================
-# LOGGING CONFIGURATION
-# =========================================
-
 logging.basicConfig(
 
     level=logging.INFO,
@@ -28,10 +24,6 @@ logger = logging.getLogger(
 )
 
 
-# =========================================
-# JSON EXTRACTION
-# =========================================
-
 def extract_json(
     text: str
 ) -> Dict[str, Any]:
@@ -46,9 +38,6 @@ def extract_json(
         f"RAW MODEL RESPONSE:\n{text}"
     )
 
-    # =====================================
-    # REMOVE MARKDOWN CODE BLOCKS
-    # =====================================
 
     cleaned = re.sub(
         r"```json|```",
@@ -56,9 +45,6 @@ def extract_json(
         text
     ).strip()
 
-    # =====================================
-    # FIND JSON OBJECT
-    # =====================================
 
     start = cleaned.find("{")
 
@@ -76,9 +62,6 @@ def extract_json(
 
     json_text = cleaned[start:end + 1]
 
-    # =====================================
-    # CLEAN COMMON JSON ISSUES
-    # =====================================
 
     json_text = re.sub(
         r",\s*}",
@@ -92,9 +75,6 @@ def extract_json(
         json_text
     )
 
-    # =====================================
-    # REMOVE INVALID CONTROL CHARS
-    # =====================================
 
     json_text = re.sub(
         r"[\x00-\x1F\x7F]",
@@ -102,9 +82,6 @@ def extract_json(
         json_text
     )
 
-    # =====================================
-    # VALIDATE JSON COMPLETENESS
-    # =====================================
 
     if not json_text.strip().endswith("}"):
 
@@ -117,9 +94,7 @@ def extract_json(
             "Incomplete JSON response"
         )
 
-    # =====================================
-    # PARSE JSON
-    # =====================================
+
 
     try:
 
@@ -148,10 +123,6 @@ def extract_json(
             f"Invalid JSON format: {e}"
         )
 
-
-# =========================================
-# TOKEN COST ESTIMATION
-# =========================================
 
 def estimate_cost(
     input_tokens: int,

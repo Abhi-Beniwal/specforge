@@ -12,15 +12,9 @@ class SpecForgeState(
     total=False
 ):
 
-    # =====================================
-    # CORE INPUT
-    # =====================================
-
     idea: str
 
-    # =====================================
-    # GLOBAL PIPELINE METADATA
-    # =====================================
+    api_key: Optional[str]
 
     pipeline_status: Optional[str]
 
@@ -28,9 +22,6 @@ class SpecForgeState(
 
     total_pipeline_latency: Optional[float]
 
-    # =====================================
-    # BUSINESS ANALYSIS
-    # =====================================
 
     business_analysis: Optional[
         Dict[str, Any]
@@ -66,9 +57,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # DEVELOPER ANALYSIS
-    # =====================================
 
     dev_concerns: Optional[
         Dict[str, Any]
@@ -98,9 +86,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # QA ANALYSIS
-    # =====================================
 
     qa_concerns: Optional[
         Dict[str, Any]
@@ -146,9 +131,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # SECURITY ANALYSIS
-    # =====================================
 
     security_concerns: Optional[
         Dict[str, Any]
@@ -206,9 +188,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # UX ANALYSIS
-    # =====================================
 
     ux_concerns: Optional[
         Dict[str, Any]
@@ -250,9 +229,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # FINAL ORCHESTRATION
-    # =====================================
 
     final_spec: Optional[
         Dict[str, Any]
@@ -270,9 +246,6 @@ class SpecForgeState(
         Dict[str, Any]
     ]
 
-    # =====================================
-    # FINAL PRODUCT SUMMARY
-    # =====================================
 
     product_summary: Optional[str]
 
@@ -288,9 +261,6 @@ class SpecForgeState(
         str
     ]
 
-    # =====================================
-    # FINAL REQUIREMENTS
-    # =====================================
 
     functional_requirements: Optional[
         List[str]
@@ -320,9 +290,6 @@ class SpecForgeState(
         List[str]
     ]
 
-    # =====================================
-    # CROSS-AGENT SYNTHESIS
-    # =====================================
 
     recurring_cross_agent_risks: Optional[
         List[str]

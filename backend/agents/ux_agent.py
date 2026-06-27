@@ -182,9 +182,9 @@ def ux_node(state: SpecForgeState) -> SpecForgeState:
     state["ux_scores"] = None
 
     try:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
+        api_key = state.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
-            raise EnvironmentError("ANTHROPIC_API_KEY not found")
+            raise EnvironmentError("No Anthropic API key available")
 
         idea = state.get("idea")
         if not idea:

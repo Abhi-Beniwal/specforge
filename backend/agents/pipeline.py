@@ -68,10 +68,6 @@ def build_pipeline():
         SpecForgeState
     )
 
-    # =====================================
-    # REGISTER SAFE NODES
-    # =====================================
-
     graph.add_node(
         "business",
         safe_node_execution(
@@ -120,10 +116,6 @@ def build_pipeline():
         )
     )
 
-    # =====================================
-    # EXECUTION FLOW
-    # =====================================
-
     graph.set_entry_point(
         "business"
     )
@@ -159,10 +151,5 @@ def build_pipeline():
     )
 
     return graph.compile()
-
-
-# =========================================
-# GLOBAL PIPELINE INSTANCE
-# =========================================
 
 spec_pipeline = build_pipeline()
