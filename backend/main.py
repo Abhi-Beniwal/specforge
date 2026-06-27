@@ -75,12 +75,12 @@ async def generate_spec(
     x_user_api_key: str = Header(None, alias="X-User-API-Key")
 ):
 
-    api_key = x_user_api_key or os.getenv("ANTHROPIC_API_KEY")
+    api_key = x_user_api_key
 
     if not api_key:
         raise HTTPException(
             status_code=400,
-            detail="No API key available. Provide your own Anthropic API key."
+            detail="Please provide your Anthropic API key to generate a spec."
         )
 
     try:
@@ -137,12 +137,12 @@ async def generate_spec_stream(
     x_user_api_key: str = Header(None, alias="X-User-API-Key")
 ):
 
-    api_key = x_user_api_key or os.getenv("ANTHROPIC_API_KEY")
+    api_key = x_user_api_key
 
     if not api_key:
         raise HTTPException(
             status_code=400,
-            detail="No API key available. Provide your own Anthropic API key."
+            detail="Please provide your Anthropic API key to generate a spec."
         )
 
     async def event_generator():

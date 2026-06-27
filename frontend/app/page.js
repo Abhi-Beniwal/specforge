@@ -623,6 +623,10 @@ export default function Home() {
 
   const submit = useCallback(async () => {
     if (!idea.trim() || phase === "running") return;
+    if (!userApiKey.trim()) {
+      setError("Please enter your Anthropic API key to generate a spec.");
+      return;
+    }
     setPhase("running");
     setStatuses({});
     setResults({});
@@ -992,7 +996,7 @@ export default function Home() {
                 className="key-input"
                 value={userApiKey}
                 onChange={handleKeyChange}
-                placeholder="Your Anthropic API key "
+                placeholder="Your Anthropic API key(required) "
                 style={{ padding:isMobile?"12px 14px":"10px 14px", fontSize:isMobile?13:12 }}
               />
               <p style={{ fontSize:10, color:"#475569", marginTop:6 }}>
@@ -1092,7 +1096,7 @@ export default function Home() {
               )}
 
               {!isRunning && (
-                <button onClick={submit} disabled={!idea.trim() || isDone}
+                <button onClick={submit} disabled={!idea.trim() || isDone || !userApiKey.trim()}
                   style={{ padding:isMobile?"12px 24px":"9px 22px",
                     background: (!idea.trim()||isDone) ? "#0a0a14" : "linear-gradient(135deg,#4338ca,#6d28d9)",
                     border:"1px solid",
