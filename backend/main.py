@@ -2,11 +2,13 @@ import os
 import json
 
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi import Header
+from anthropic import Anthropic
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
@@ -25,8 +27,6 @@ from backend.database.db import save_project, save_specification
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
-# Rate limiter — keyed by IP address
-# Each unique IP can call /generate-spec-stream max 3 times per hour
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
@@ -34,7 +34,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Attach rate limiter to app
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
@@ -49,8 +48,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Custom error response when rate limit is exceeded
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
@@ -72,17 +69,46 @@ def root():
 
 @app.post("/generate-spec")
 @limiter.limit("3/hour")
-async def generate_spec(request: Request, body: IdeaRequest):
+async def generate_spec(
+    request: Request,
+    body: IdeaRequest,
+    x_user_api_key: str = Header(None, alias="X-User-API-Key")
+):
 
-    result = spec_pipeline.invoke({
-        "idea": body.idea,
-        "business_analysis": None,
-        "dev_concerns": None,
-        "qa_concerns": None,
-        "security_concerns": None,
-        "ux_concerns": None,
-        "final_spec": None
-    })
+    api_key = x_user_api_key or os.getenv("ANTHROPIC_API_KEY")
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="No API key available. Provide your own Anthropic API key."
+        )
+
+    try:
+        test_client = Anthropic(api_key=api_key)
+        test_client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "hi"}]
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Anthropic API key. Please check it and try again."
+        )
+
+    try:
+        result = spec_pipeline.invoke({
+            "idea": body.idea,
+            "business_analysis": None,
+            "dev_concerns": None,
+            "qa_concerns": None,
+            "security_concerns": None,
+            "ux_concerns": None,
+            "final_spec": None,
+            "api_key": api_key
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pipeline failed: {str(e)}")
 
     project_id = save_project(
         user_id="anonymous",
@@ -105,12 +131,25 @@ async def generate_spec(request: Request, body: IdeaRequest):
 
 @app.post("/generate-spec-stream")
 @limiter.limit("3/hour")
-async def generate_spec_stream(request: Request, body: IdeaRequest):
+async def generate_spec_stream(
+    request: Request,
+    body: IdeaRequest,
+    x_user_api_key: str = Header(None, alias="X-User-API-Key")
+):
+
+    api_key = x_user_api_key or os.getenv("ANTHROPIC_API_KEY")
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="No API key available. Provide your own Anthropic API key."
+        )
 
     async def event_generator():
 
         state = {
             "idea": body.idea,
+            "api_key": api_key,
             "business_analysis": None,
             "dev_concerns": None,
             "qa_concerns": None,
@@ -151,12 +190,12 @@ async def generate_spec_stream(request: Request, body: IdeaRequest):
             yield f"data: {json.dumps({'type': 'done', 'project_id': None})}\n\n"
 
     return StreamingResponse(
-    event_generator(),
-    media_type="text/event-stream",
-    headers={
-        "Cache-Control": "no-cache",
-        "X-Accel-Buffering": "no",
-        "Connection": "keep-alive",
-        "Transfer-Encoding": "chunked",
-    }
-)
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+            "Transfer-Encoding": "chunked",
+        }
+    )
