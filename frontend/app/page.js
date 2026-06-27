@@ -992,11 +992,11 @@ export default function Home() {
                 className="key-input"
                 value={userApiKey}
                 onChange={handleKeyChange}
-                placeholder="Your Anthropic API key (optional — required if demo quota is used up)"
+                placeholder="Your Anthropic API key "
                 style={{ padding:isMobile?"12px 14px":"10px 14px", fontSize:isMobile?13:12 }}
               />
               <p style={{ fontSize:10, color:"#475569", marginTop:6 }}>
-                Don't have one? Get a free $5 credit at{" "}
+                Don't have one? Get a free signup credits at{" "}
                 <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
                    style={{ color:"#818cf8" }}>console.anthropic.com</a>
               </p>
