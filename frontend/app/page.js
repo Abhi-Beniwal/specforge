@@ -260,7 +260,6 @@ function AgentOutput({ agent, data }) {
 }
 
 // ─── VerdictSummaryRow ────────────────────────────────────────────────────────
-// Quick overview of all 6 agent verdicts in one scannable row
 
 function VerdictSummaryRow({ results, isMobile }) {
   const entries = AGENTS.filter(a => results[a.key]);
@@ -470,12 +469,12 @@ function downloadReport(idea, results) {
   lines.push(`</body></html>`);
 
   const blob = new Blob([lines.join("\n")], { type:"text/html" });
-const url  = URL.createObjectURL(blob);
-const a    = document.createElement("a");
-a.href     = url;
-a.download = `specforge-report.html`;
-a.click();
-setTimeout(() => URL.revokeObjectURL(url), 10000);
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `specforge-report.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
@@ -500,6 +499,7 @@ export default function Home() {
   const [progress, setProgress]       = useState(0);
   const [activeAgentIdx, setActiveAgentIdx] = useState(0);
   const [isMobile, setIsMobile]       = useState(false);
+  const [userApiKey, setUserApiKey]   = useState("");
 
   const textareaRef   = useRef(null);
   const timersRef     = useRef([]);
@@ -535,6 +535,19 @@ export default function Home() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Load saved API key from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("specforge_user_key");
+    if (saved) setUserApiKey(saved);
+  }, []);
+
+  const handleKeyChange = (e) => {
+    const val = e.target.value;
+    setUserApiKey(val);
+    if (val) localStorage.setItem("specforge_user_key", val);
+    else localStorage.removeItem("specforge_user_key");
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -632,7 +645,10 @@ export default function Home() {
       const timeout = setTimeout(() => controllerRef.current?.abort(), 480000);
       const res = await fetch(`${BACKEND}/generate-spec`, {
         method:"POST",
-        headers:{ "Content-Type":"application/json" },
+        headers:{
+          "Content-Type":"application/json",
+          ...(userApiKey ? { "X-User-API-Key": userApiKey } : {})
+        },
         body:JSON.stringify({ idea }),
         signal:controllerRef.current.signal,
       });
@@ -651,6 +667,8 @@ export default function Home() {
       stopProgressBar(false);
       if (err.name === "AbortError" && phase !== "idle") {
         setError("Request timed out. Please try again.");
+      } else if (err.message?.includes("401")) {
+        setError("Invalid API key. Check your Anthropic key and try again.");
       } else if (err.message?.includes("429")) {
         setError("Rate limit reached — 3 specs per hour. Try again later.");
       } else if (err.name !== "AbortError") {
@@ -659,7 +677,7 @@ export default function Home() {
       setPhase("idle");
       setStatuses({});
     }
-  }, [idea, phase]);
+  }, [idea, phase, userApiKey]);
 
   const reset = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
@@ -760,6 +778,8 @@ export default function Home() {
         .menu-item { width:100%; background:none; border:none; padding:10px 16px; text-align:left; cursor:pointer; color:#94a3b8; font-size:13px; font-family:'Inter',sans-serif; transition:background .15s; display:flex; align-items:center; gap:10px; }
         .menu-item:hover { background:#0a0a14; color:#e2e8f0; }
         .menu-item.danger:hover { background:#0f0008; color:#f87171; }
+        .key-input { width:100%; padding:10px 14px; background:#08081a; border:1px solid #1a1a2e; border-radius:9px; color:#e2e8f0; font-size:12px; font-family:'IBM Plex Mono',monospace; outline:none; transition:border-color .2s; }
+        .key-input:focus { border-color:#6366f1; }
       `}</style>
 
       <div className="dot-bg" style={{ position:"fixed", inset:0, zIndex:0, opacity:.3, pointerEvents:"none" }} />
@@ -963,6 +983,25 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* ── API Key Input ── */}
+          {isIdle && (
+            <div style={{ marginBottom:10 }}>
+              <input
+                type="password"
+                className="key-input"
+                value={userApiKey}
+                onChange={handleKeyChange}
+                placeholder="Your Anthropic API key (optional — required if demo quota is used up)"
+                style={{ padding:isMobile?"12px 14px":"10px 14px", fontSize:isMobile?13:12 }}
+              />
+              <p style={{ fontSize:10, color:"#475569", marginTop:6 }}>
+                Don't have one? Get a free $5 credit at{" "}
+                <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
+                   style={{ color:"#818cf8" }}>console.anthropic.com</a>
+              </p>
+            </div>
+          )}
 
           {/* ── Input ── */}
           <div style={{ paddingTop:isIdle?0:20, paddingBottom:16, transition:"padding .5s ease" }}>
