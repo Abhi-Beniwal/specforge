@@ -62,7 +62,7 @@ class IdeaRequest(BaseModel):
     idea: str
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "SpecForge backend is running"}
 
